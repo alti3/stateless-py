@@ -3,6 +3,7 @@ from typing import List
 
 from stateless import StateMachine, Transition
 
+
 # --- States ---
 class PlayerState(Enum):
     STOPPED = auto()
@@ -77,9 +78,7 @@ player.configure(PlayerState.PLAYING).on_activate(activate_playing_scope).on_dea
     Trigger.PAUSE, PlayerState.PAUSED
 ).internal_transition(
     Trigger.SET_VOLUME, log_action("Internal Action: Set Volume")
-).initial_transition(
-    MediaState.AUDIO
-)  # Default to AUDIO when entering PLAYING
+).initial_transition(MediaState.AUDIO)  # Default to AUDIO when entering PLAYING
 
 # AUDIO Substate
 player.configure(MediaState.AUDIO).substate_of(PlayerState.PLAYING).on_entry(
@@ -92,9 +91,9 @@ player.configure(MediaState.VIDEO).substate_of(PlayerState.PLAYING).on_entry(
 ).permit(Trigger.TOGGLE_MEDIA, MediaState.AUDIO)
 
 # PAUSED State
-player.configure(PlayerState.PAUSED).permit(
-    Trigger.PLAY, PlayerState.PLAYING
-).permit(Trigger.STOP, PlayerState.STOPPED)
+player.configure(PlayerState.PAUSED).permit(Trigger.PLAY, PlayerState.PLAYING).permit(
+    Trigger.STOP, PlayerState.STOPPED
+)
 
 
 # --- Usage ---
@@ -147,4 +146,4 @@ try:
     player.fire(Trigger.SET_VOLUME, 50)
 except Exception as e:
     print(f"\nError: {e}")
-print_log_and_state("After trying SET_VOLUME when STOPPED") 
+print_log_and_state("After trying SET_VOLUME when STOPPED")
