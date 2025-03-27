@@ -1,0 +1,91 @@
+# stateless-py/pyproject.toml
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "stateless-py"
+version = "0.1.0"
+description = "A simple library for creating state machines in Python code"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Your Name", email = "your.email@example.com" }, # TODO: Replace with your details
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "pydantic>=2.0,<3.0",
+    "ruff>=0.11.2",
+    "typing_extensions>=4.0.0", # For older Python versions
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0,<9.0.0",
+    "pytest-asyncio>=0.18.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "pre-commit", # Added for convenience
+]
+# Optional dependency for graphviz dot executable rendering, not required by the library itself
+graphing = [
+     "graphviz>=0.20.0"
+]
+
+
+[project.urls]
+Homepage = "https://github.com/yourusername/stateless-py" # TODO: Replace with your repo URL
+Repository = "https://github.com/yourusername/stateless-py" # TODO: Replace with your repo URL
+
+[tool.hatch.version]
+path = "src/stateless/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/README.md",
+    "/LICENSE",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/stateless"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = [
+    "tests",
+]
+asyncio_mode="auto" # For pytest-asyncio
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true # Start lenient
+# disallow_untyped_defs = true # Enable later for stricter typing
+# check_untyped_defs = true # Enable later for stricter typing
+# strict = True # Consider enabling for full strictness later
+show_error_codes = true
+pretty = true
+# Specify paths for mypy to check
+files = ["src/stateless", "tests"] 
