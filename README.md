@@ -6,7 +6,7 @@
 
 `stateless-py` is a versatile and straightforward library for creating state machines in Python, heavily inspired by the popular [Stateless](https://github.com/dotnet-state-machine/stateless) library for C#. It allows you to define states and triggers, configure transitions with guards and actions, manage state hierarchies (substates), and introspect the machine's structure.
 
-## Features (Planned)
+## Features
 
 *   **Fluent Configuration API:** Define state machine behaviour easily (`configure`, `permit`, `on_entry`, etc.).
 *   **Generic States and Triggers:** Use enums, strings, integers, or any hashable type.
@@ -32,7 +32,7 @@ uv add stateless-py
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/stateless-py.git # TODO: Replace with your repo URL
+git clone https://github.com/alti3/stateless-py.git # TODO: Replace with your repo URL
 cd stateless-py
 
 # Install in editable mode with development dependencies
@@ -308,7 +308,7 @@ print(mermaid_graph)
 
 Contributions are welcome! Please open an issue or submit a pull request.
 
-You can report bugs or suggest features via [GitHub Issues](https://github.com/yourusername/stateless-py/issues).
+You can report bugs or suggest features via [GitHub Issues](https://github.com/alti3/stateless-py/issues).
 
 ## License
 
