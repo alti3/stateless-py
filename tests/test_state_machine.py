@@ -2,7 +2,7 @@ import pytest
 from enum import Enum, auto
 from typing import List
 
-from stateless import StateMachine, StateT, TriggerT, InvalidTransitionError, FiringMode
+from stateless import StateMachine, InvalidTransitionError
 
 # TODO: Add actual tests for StateMachine core functionality
 

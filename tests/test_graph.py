@@ -1,4 +1,3 @@
-import pytest
 from enum import Enum, auto
 from typing import Any
 from stateless import StateMachine

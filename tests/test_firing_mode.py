@@ -3,7 +3,7 @@ import asyncio
 from enum import Enum, auto
 from typing import List
 
-from stateless import StateMachine, FiringMode, InvalidTransitionError
+from stateless import StateMachine, FiringMode
 
 # --- Test Setup ---
 

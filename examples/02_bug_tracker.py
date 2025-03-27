@@ -1,7 +1,5 @@
-import pytest  # Using pytest markers for async tests
-import asyncio
 from enum import Enum, auto
-from typing import Optional, List, Tuple
+from typing import Optional, Tuple
 
 from stateless import StateMachine, Transition, InvalidTransitionError
 

@@ -4,14 +4,10 @@ Provides the fluent API for configuring states (Permit, Ignore, OnEntry, etc.).
 
 # Placeholder - Core implementation to follow
 from typing import (
-    TypeVar,
     Generic,
     Callable,
     Sequence,
-    Any,
     Optional,
-    Type,
-    List,
     Union,
     overload,
 )

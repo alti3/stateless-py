@@ -5,7 +5,6 @@ from typing import (
     Any,
     Optional,
     Generic,
-    TypeVar,
     cast,
     Awaitable,
     Union,
@@ -13,7 +12,6 @@ from typing import (
     List,
 )
 from abc import ABC, abstractmethod
-import asyncio
 
 from .reflection import InvocationInfo, ActionDef
 from .transition import Transition, StateT, TriggerT

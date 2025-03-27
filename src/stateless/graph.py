@@ -10,9 +10,6 @@ if TYPE_CHECKING:
     from .reflection import (
         StateMachineInfo,
         StateInfo,
-        TransitionInfo,
-        IgnoredTransitionInfo,
-        DynamicTransitionInfo,
     )
 
 StateT = TypeVar("StateT")
@@ -175,7 +172,7 @@ def generate_dot_graph(sm_info: "StateMachineInfo") -> str:
 
 def generate_mermaid_graph(sm_info: "StateMachineInfo", direction: str = "TB") -> str:
     """Generates a Mermaid graph representation of the state machine."""
-    lines = [f"stateDiagram-v2", f"    direction {direction}"]
+    lines = ["stateDiagram-v2", f"    direction {direction}"]
     edge_lines = []
     processed_states = set()
 
@@ -265,7 +262,7 @@ def visualize_graph(
         print(f"Graph saved to {filename}.{format}")
     except graphviz.backend.execute.ExecutableNotFound:
         print(
-            f"Graphviz executable not found. Please install Graphviz (https://graphviz.org/download/) and ensure it's in your PATH."
+            "Graphviz executable not found. Please install Graphviz (https://graphviz.org/download/) and ensure it's in your PATH."
         )
     except Exception as e:
         print(f"Error rendering graph: {e}")

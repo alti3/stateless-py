@@ -4,16 +4,12 @@ Internal representation of a state and its associated behaviours (transitions, a
 
 # Placeholder - Core implementation to follow
 from typing import (
-    TypeVar,
     Generic,
     Optional,
     List,
     Dict,
-    Callable,
     Sequence,
     Any,
-    Tuple,
-    Awaitable,
 )
 
 from .transition import StateT, TriggerT, Transition, InitialTransition

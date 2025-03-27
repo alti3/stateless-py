@@ -4,7 +4,6 @@ The main StateMachine class.
 
 # Placeholder - Core implementation to follow
 from typing import (
-    TypeVar,
     Generic,
     Optional,
     Callable,
@@ -47,7 +46,6 @@ from .reflection import (
 )  # Added InternalTransitionInfo
 from .trigger_behaviour import (
     TriggerBehaviour,
-    TriggerBehaviourResult,
     IgnoredTriggerBehaviour,
     ReentryTriggerBehaviour,
     InternalTriggerBehaviour,
@@ -715,16 +713,6 @@ class StateMachine(Generic[StateT, TriggerT]):
     def get_info(self) -> "StateMachineInfo":
         """Returns structural information about the state machine configuration."""
         # Imports moved inside to avoid potential circular import issues at module level
-        from .reflection import (
-            StateInfo,
-            ActionInfo,
-            TransitionInfo,
-            IgnoredTransitionInfo,
-            DynamicTransitionInfo,
-            GuardInfo,
-            TriggerInfo,
-            InternalTransitionInfo,
-        )
         from .trigger_behaviour import (
             IgnoredTriggerBehaviour,
             TransitioningTriggerBehaviour,

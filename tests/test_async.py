@@ -1,9 +1,9 @@
 import pytest
 import asyncio
 from enum import Enum, auto
-from typing import List, Sequence, Any
+from typing import List
 
-from stateless import StateMachine, Transition, InvalidTransitionError, FiringMode
+from stateless import StateMachine, FiringMode
 
 # --- Test Setup ---
 

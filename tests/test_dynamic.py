@@ -1,8 +1,8 @@
 import pytest
 from enum import Enum, auto
-from typing import List, Sequence, Any, Optional
+from typing import List
 
-from stateless import StateMachine, InvalidTransitionError, Transition
+from stateless import StateMachine, InvalidTransitionError
 
 # TODO: Add tests for dynamic transitions
 

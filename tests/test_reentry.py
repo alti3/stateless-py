@@ -2,7 +2,7 @@ import pytest
 from enum import Enum, auto
 from typing import List
 
-from stateless import StateMachine, Transition, InvalidTransitionError
+from stateless import StateMachine, InvalidTransitionError
 
 # --- Test Setup ---
 

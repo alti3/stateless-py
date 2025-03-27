@@ -3,7 +3,7 @@ from enum import Enum, auto
 from typing import List, Sequence, Any
 import asyncio
 
-from stateless import StateMachine, StateT, TriggerT, Transition, InvalidTransitionError
+from stateless import StateMachine, Transition, InvalidTransitionError
 
 
 class State(Enum):
