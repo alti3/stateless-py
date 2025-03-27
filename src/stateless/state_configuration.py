@@ -38,6 +38,22 @@ if False:  # TYPE_CHECKING
     from .state_machine import StateMachine
 
 
+# --- Helper Function ---
+def _get_action_and_description(
+    action_def: ActionDef,
+) -> tuple[Callable[..., ActionFuncResult], Optional[str]]:
+    """Extracts the callable action and its description from ActionDef."""
+    if callable(action_def):
+        return action_def, None
+    elif isinstance(action_def, tuple) and len(action_def) == 2 and callable(action_def[0]):
+        # Type checker might need help here depending on ActionDef definition
+        return action_def[0], action_def[1] # type: ignore
+    else:
+        # This case should ideally be prevented by type hinting ActionDef correctly,
+        # but adding a runtime check for robustness.
+        raise TypeError(f"Invalid ActionDef format: {action_def!r}. Expected callable or (callable, str).")
+
+
 class StateConfiguration(Generic[StateT, TriggerT]):
     """Fluent configuration for a single state."""
 

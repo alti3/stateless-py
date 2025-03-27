@@ -376,11 +376,9 @@ class StateMachine(Generic[StateT, TriggerT]):
 
         destination: Optional[StateT] = None
         is_internal = False
-        is_reentry = False
 
         if isinstance(handler, ReentryTriggerBehaviour):
             destination = handler.destination
-            is_reentry = True
         elif isinstance(handler, InternalTriggerBehaviour):
             is_internal = True
             destination = current_state  # Stays in the same state

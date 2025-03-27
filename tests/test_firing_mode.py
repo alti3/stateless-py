@@ -116,7 +116,7 @@ async def test_queued_fire_without_running_loop():
     sm.configure(State.A).permit(Trigger.X, State.B)
 
     # Try firing before loop starts (should ideally raise or log error)
-    with pytest.raises(RuntimeError) as excinfo:
+    with pytest.raises(RuntimeError):
         # Need to run this within an async context to even call fire_async
         async def try_fire():
             await sm.fire_async(Trigger.X)
