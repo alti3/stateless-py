@@ -36,6 +36,40 @@ async def test_internal_transition_executes_action():
 
 
 @pytest.mark.asyncio
+async def test_internal_transition_multiple_args():
+    """Tests internal transition action receiving multiple arguments."""
+    action_args = None
+
+    def internal_action(transition: Transition, args: Sequence[Any]):
+        nonlocal action_args
+        action_args = args
+
+    sm = StateMachine[State, Trigger](State.A)
+    sm.configure(State.A).internal_transition(Trigger.INTERNAL, internal_action)
+
+    await sm.fire_async(Trigger.INTERNAL, 100, "test", True)
+    assert sm.state == State.A
+    assert action_args == (100, "test", True)
+
+
+@pytest.mark.asyncio
+async def test_internal_transition_specific_args():
+    """Tests internal transition action receiving specific typed arguments."""
+    action_args = None
+
+    def internal_action(val: int, name: str):
+        nonlocal action_args
+        action_args = (val, name)
+
+    sm = StateMachine[State, Trigger](State.A)
+    sm.configure(State.A).internal_transition(Trigger.INTERNAL, internal_action)
+
+    await sm.fire_async(Trigger.INTERNAL, 99, "specific")
+    assert sm.state == State.A
+    assert action_args == (99, "specific")
+
+
+@pytest.mark.asyncio
 async def test_internal_transition_does_not_exit_enter():
     """Tests that internal transitions don't trigger exit/entry actions."""
     actions_executed: List[str] = []

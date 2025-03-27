@@ -188,6 +188,82 @@ def test_state_accessor_mutator():
     assert external_state["current"] == State.A
 
 
+def test_state_accessor_raises_exception():
+    """Tests when the state accessor raises an error."""
+    def getter_error():
+        raise ValueError("Cannot get state")
+    def setter(s): pass # pragma: no cover
+
+    # Error during initialization (accessor called after internal state set)
+    with pytest.raises(ValueError, match="Cannot get state"):
+        StateMachine[State, Trigger](
+            State.A, state_accessor=getter_error, state_mutator=setter
+        )
+
+    # Error during firing (accessor called before finding handler)
+    external_state = {"current": State.A}
+    getter_calls = 0
+    def getter_error_later():
+        nonlocal getter_calls
+        getter_calls += 1
+        if getter_calls > 1: # Error on second call (during fire)
+            raise ValueError("Cannot get state later")
+        return external_state["current"]
+    def setter_ok(s): external_state["current"] = s # pragma: no cover
+
+    sm = StateMachine[State, Trigger](
+        State.A, state_accessor=getter_error_later, state_mutator=setter_ok
+    )
+    sm.configure(State.A).permit(Trigger.X, State.B)
+
+    # The call to sm.state within sm.fire() will trigger the error
+    with pytest.raises(ValueError, match="Cannot get state later"):
+        sm.fire(Trigger.X)
+    # State should not have changed as error occurred before transition logic
+    assert external_state["current"] == State.A
+    # Internal state also shouldn't change if accessor fails early
+    # assert sm._current_state == State.A # Cannot access internal state directly
+
+
+def test_state_mutator_raises_exception():
+    """Tests when the state mutator raises an error."""
+    external_state = {"current": State.A}
+    def getter(): return external_state["current"]
+    def setter_error(s):
+        # Simulate failure during state update
+        raise ValueError("Cannot set state")
+
+    sm = StateMachine[State, Trigger](
+        State.A, state_accessor=getter, state_mutator=setter_error
+    )
+    sm.configure(State.A).permit(Trigger.X, State.B)
+
+    with pytest.raises(ValueError, match="Cannot set state"):
+        sm.fire(Trigger.X)
+
+    # Check that external state wasn't updated
+    assert external_state["current"] == State.A
+    # Check that internal state (via accessor) also reflects the original state,
+    # as the mutator failed before the conceptual state change completed.
+    assert sm.state == State.A
+
+
+def test_initial_state_vs_accessor_mismatch():
+    """Tests behavior when constructor initial_state differs from accessor."""
+    external_state = {"current": State.B} # Accessor returns B
+    def getter(): return external_state["current"]
+    def setter(s): external_state["current"] = s
+
+    # Initialize with A, but accessor returns B
+    sm = StateMachine[State, Trigger](
+        State.A, state_accessor=getter, state_mutator=setter
+    )
+
+    # What is the expected state? C# likely uses the accessor's value.
+    assert sm.state == State.B # Assert that accessor value takes precedence
+    assert external_state["current"] == State.B
+
+
 # --- Sync Reentrancy Check ---
 def test_sync_reentrant_fire_raises_error():
     """Tests that immediate synchronous reentrant firing raises an error."""

@@ -130,3 +130,53 @@ async def test_queued_fire_without_running_loop():
 
     # Clean up if task was somehow created
     await sm.close_async()
+
+
+@pytest.mark.asyncio
+async def test_queued_action_exception_logged_and_continues(caplog):
+    """Tests that an exception in a queued action is logged and queue continues."""
+    sm = StateMachine[State, Trigger](State.A, firing_mode=FiringMode.QUEUED)
+    processed_y = False
+    processed_z = False
+
+    async def faulty_entry_b(t):
+        actions_log.append("entry_b_start")
+        raise ValueError("Action failed!")
+        actions_log.append("entry_b_end") # pragma: no cover
+
+    def entry_c(t):
+        nonlocal processed_y
+        processed_y = True
+        actions_log.append("entry_c")
+
+    def entry_a_from_z(t):
+        nonlocal processed_z
+        processed_z = True
+        actions_log.append("entry_a_from_z")
+
+    sm.configure(State.A).permit(Trigger.X, State.B).permit(Trigger.Z, State.A).on_entry(entry_a_from_z)
+    sm.configure(State.B).on_entry(faulty_entry_b).permit(Trigger.Y, State.C)
+    sm.configure(State.C).on_entry(entry_c)
+
+    # Fire X (will fail), then Y (should be skipped as state is still A), then Z (should process)
+    await sm.fire_async(Trigger.X)
+    await sm.fire_async(Trigger.Y)
+    await sm.fire_async(Trigger.Z)
+
+    # Wait for queue to process all triggers
+    await asyncio.sleep(0.1)
+
+    assert sm.state == State.A
+    assert actions_log == ["entry_b_start", "entry_a_from_z"]
+    assert processed_y is False
+    assert processed_z is True
+
+    assert "ValueError" in caplog.text
+    assert "Action failed!" in caplog.text
+    assert f"Unexpected error processing queued trigger {Trigger.X!r}" in caplog.text
+
+    await sm.close_async()
+
+
+# --- FiringMode.DEVELOPMENT (Placeholder) ---
+# Add tests if this mode is implemented

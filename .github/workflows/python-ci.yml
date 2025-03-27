@@ -31,13 +31,13 @@ jobs:
       run: uv sync --all-extras --dev
 
     - name: Lint with Ruff
-      run: uv run ruff check .
+      run: uvx ruff check .
 
     - name: Format with Ruff
-      run: uv run ruff format --check .
+      run: uvx ruff format --check .
 
     - name: Type check with mypy
-      run: uv run mypy .
+      run: uvx mypy .
 
     - name: Test with pytest
-      run: uv run pytest 
+      run: uvx pytest 

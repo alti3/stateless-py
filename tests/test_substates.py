@@ -146,7 +146,68 @@ async def test_unhandled_trigger_in_substate_handled_by_superstate():
 
 
 @pytest.mark.asyncio
+async def test_substate_action_order_full():
+    """Tests entry/exit and activate/deactivate order during transitions."""
+    sm = StateMachine[Any, Trigger](Parent.C)  # Start outside hierarchy
+    sm.configure(Parent.C).permit(Trigger.GO_A1, ChildA.A1)
+
+    sm.configure(ChildA.A1).substate_of(Parent.A)\
+        .on_entry(entry(ChildA.A1))\
+        .on_exit(exit_(ChildA.A1))\
+        .on_activate(activate(ChildA.A1))\
+        .on_deactivate(deactivate(ChildA.A1))\
+        .permit(Trigger.GO_B1, ChildB.B1)
+
+    sm.configure(Parent.A)\
+        .on_entry(entry(Parent.A))\
+        .on_exit(exit_(Parent.A))\
+        .on_activate(activate(Parent.A))\
+        .on_deactivate(deactivate(Parent.A))
+
+    sm.configure(ChildB.B1).substate_of(Parent.B)\
+        .on_entry(entry(ChildB.B1))\
+        .on_activate(activate(ChildB.B1))
+        # No exit/deactivate needed for this test path
+
+    sm.configure(Parent.B)\
+        .on_entry(entry(Parent.B))\
+        .on_activate(activate(Parent.B))
+        # No exit/deactivate needed for this test path
+
+    # Transition C -> A1 (enters A, then A1; activates A, then A1)
+    await sm.fire_async(Trigger.GO_A1)
+    assert sm.state == ChildA.A1
+    # Order: Entry Super -> Entry Sub -> Activate Super -> Activate Sub
+    assert actions_log == [
+        "entry_Parent.A",
+        "entry_ChildA.A1",
+        "activate_Parent.A",
+        "activate_ChildA.A1",
+    ]
+
+    actions_log.clear()
+    # Transition A1 -> B1
+    # Exit/Deactivate Order: Deactivate Sub -> Deactivate Super -> Exit Sub -> Exit Super
+    # Entry/Activate Order: Entry Super -> Entry Sub -> Activate Super -> Activate Sub
+    await sm.fire_async(Trigger.GO_B1)
+    assert sm.state == ChildB.B1
+    assert actions_log == [
+        "deactivate_ChildA.A1",
+        "deactivate_Parent.A",
+        "exit_ChildA.A1",
+        "exit_Parent.A",
+        "entry_Parent.B",
+        "entry_ChildB.B1",
+        "activate_Parent.B",
+        "activate_ChildB.B1",
+    ]
+
+
+@pytest.mark.asyncio
 async def test_substate_action_order_enter_exit():
+    # This test is now covered by test_substate_action_order_full
+    # We can keep it if we want a simpler version focusing only on entry/exit
+    # Or remove it. Let's keep it for now but note the overlap.
     sm = StateMachine[Any, Trigger](Parent.C)  # Start outside hierarchy
     sm.configure(Parent.C).permit(Trigger.GO_A1, ChildA.A1)
     sm.configure(ChildA.A1).substate_of(Parent.A).on_entry(entry(ChildA.A1)).on_exit(

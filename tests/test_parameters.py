@@ -2,7 +2,7 @@ import pytest
 from enum import Enum, auto
 from typing import List, Sequence, Any
 
-from stateless import StateMachine, Transition, InvalidTransitionError
+from stateless import StateMachine, Transition, InvalidTransitionError, ConfigurationError
 
 # --- Test Setup ---
 
@@ -28,7 +28,68 @@ def setup_function():
     selector_log.clear()
 
 
-# --- Tests ---
+# --- Action Signature Tests ---
+
+def test_action_signature_transition_only():
+    def action(transition: Transition):
+        actions_log.append(f"action_t_{transition.trigger}")
+
+    sm = StateMachine[State, Trigger](State.A)
+    sm.configure(State.A).permit(Trigger.X, State.B).on_entry(action)
+    sm.fire(Trigger.X, 1, 2) # Pass args even if not accepted
+    assert actions_log == ["action_t_Trigger.X"]
+
+def test_action_signature_transition_and_args_tuple():
+    def action(transition: Transition, args: Sequence[Any]):
+        actions_log.append(f"action_t_args_{args}")
+
+    sm = StateMachine[State, Trigger](State.A)
+    sm.configure(State.A).permit(Trigger.X, State.B).on_entry(action)
+    sm.fire(Trigger.X, 1, "two")
+    assert actions_log == ["action_t_args_(1, 'two')"]
+
+def test_action_signature_specific_args():
+    # Already covered by test_parameters_passed_to_sync_action
+    # and test_parameters_passed_to_async_action (action_v2)
+    pass
+
+def test_action_signature_var_args():
+    def action(*args):
+        # Wrapper expects ["transition", "args"] for on_entry.
+        # It passes the transition object and the tuple of trigger args.
+        actions_log.append(f"action_varargs_{args}")
+        assert isinstance(args[0], Transition)
+        assert args[1] == (1, 2, 3) # The trigger args tuple
+
+    sm = StateMachine[State, Trigger](State.A)
+    sm.configure(State.A).permit(Trigger.X, State.B).on_entry(action)
+    sm.fire(Trigger.X, 1, 2, 3)
+    # The log will contain the Transition object representation, which might be verbose.
+    # Let's check the structure instead of exact string match.
+    assert len(actions_log) == 1
+    assert actions_log[0].startswith("action_varargs_(")
+
+
+def test_action_signature_kwargs_not_supported():
+    # Python's inspect doesn't easily map positional fire args to kwargs
+    # without explicit naming or a dict argument. The _build_wrapper expects
+    # named args like 'transition', 'args', or *args. A **kwargs only signature
+    # will likely fail the mapping in _build_wrapper.
+    def action(**kwargs):
+        actions_log.append(f"action_kwargs_{kwargs}") # pragma: no cover
+
+    sm = StateMachine[State, Trigger](State.A)
+    # ConfigurationError should be raised when _build_wrapper fails to map args
+    with pytest.raises(ConfigurationError):
+        sm.configure(State.A).permit(Trigger.X, State.B).on_entry(action)
+
+    # If configuration somehow passed, firing would likely fail too,
+    # but the config error is more likely.
+    # sm.fire(Trigger.X, 1, 2)
+    # assert actions_log == []
+
+
+# --- Parameter Passing Tests ---
 
 
 def test_parameters_passed_to_sync_action():

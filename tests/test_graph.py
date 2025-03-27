@@ -41,6 +41,33 @@ def test_generate_dot_graph_simple():
     assert '"B" -> "A" [label="Y"]' in dot
 
 
+def test_generate_dot_graph_features():
+    """Tests DOT graph includes guards, internal, ignored, dynamic."""
+    sm = StateMachine[State, Trigger](State.A)
+    sm.configure(State.A)\
+        .permit_if(Trigger.X, State.B, lambda: True, "GuardX")\
+        .ignore(Trigger.Y)\
+        .internal_transition(Trigger.Z, lambda: None)\
+        .dynamic(Trigger.R, lambda: State.C)
+    sm.configure(State.B)
+    sm.configure(State.C)
+
+    dot = sm.generate_dot_graph()
+    # print(dot) # For debugging
+
+    # Guard
+    assert '"A" -> "B" [label="X [GuardX]"]' in dot
+
+    # Ignored - Should be a self-loop with (ignored)
+    assert '"A" -> "A" [label="Y (ignored)"]' in dot
+
+    # Internal - Should be a self-loop
+    assert '"A" -> "A" [label="Z"]' in dot
+
+    # Dynamic - Should be a self-loop, dashed, showing selector
+    assert '"A" -> "A" [label="R -> (<lambda>)", style=dashed]' in dot
+
+
 def test_generate_dot_graph_substates():
     sm = StateMachine[Any, Trigger](SubA.A1)
     sm.configure(SubA.A1).substate_of(State.A).permit(Trigger.X, SubA.A2)
@@ -54,23 +81,18 @@ def test_generate_dot_graph_substates():
 
     assert 'subgraph "cluster_A"' in dot
     assert 'label="A"' in dot
-    assert '"A1" [label="A1"]' in dot  # Node inside cluster
-    assert '"A2" [label="A2"]' in dot  # Node inside cluster
-    assert '"B" [label="B"]' in dot  # Separate node
-    assert '"C" [label="C"]' in dot  # Separate node
+    assert '"A1" [label="A1"]' in dot
+    assert '"A2" [label="A2"]' in dot
+    assert '"B" [label="B"]' in dot
+    assert '"C" [label="C"]' in dot
 
-    assert '__start -> "A1"' in dot  # Initial state is substate
+    assert '__start -> "A1"' in dot
 
     # Check edges with cluster options
-    assert '"A1" -> "A2" [label="X"]' in dot  # Internal to cluster
-    assert '"A2" -> "B" [label="Y"][ltail="cluster_A"]' in dot  # Exiting cluster A
-    assert (
-        '"A" -> "C" [label="Z"]' not in dot
-    )  # Should not have edge from "A" node directly if cluster
-    # Edges from superstates need careful thought - current impl might add from node "A"
-    # assert '"A" -> "C" [label="Z"][ltail="cluster_A"]' in dot # Ideal: edge from cluster boundary
-
-    assert '"B" -> "A1" [label="R"][lhead="cluster_A"]' in dot  # Entering cluster A
+    assert '"A1" -> "A2" [label="X"]' in dot
+    assert '"A2" -> "B" [label="Y", ltail="cluster_A"]' in dot
+    assert '"A" -> "C" [label="Z"]' in dot
+    assert '"B" -> "A1" [label="R", lhead="cluster_A"]' in dot
 
 
 def test_generate_mermaid_graph_simple():
@@ -86,6 +108,33 @@ def test_generate_mermaid_graph_simple():
     assert "B --> A : Y" in mermaid
 
 
+def test_generate_mermaid_graph_features():
+    """Tests Mermaid graph includes guards, internal, ignored, dynamic."""
+    sm = StateMachine[State, Trigger](State.A)
+    sm.configure(State.A)\
+        .permit_if(Trigger.X, State.B, lambda: True, "GuardX")\
+        .ignore(Trigger.Y)\
+        .internal_transition(Trigger.Z, lambda: None)\
+        .dynamic(Trigger.R, lambda: State.C)
+    sm.configure(State.B)
+    sm.configure(State.C)
+
+    mermaid = sm.generate_mermaid_graph()
+    # print(mermaid) # For debugging
+
+    # Guard
+    assert "A --> B : X [GuardX]" in mermaid
+
+    # Ignored - Should be a self-loop with (ignored)
+    assert "A --> A : Y (ignored)" in mermaid
+
+    # Internal - Should be a self-loop
+    assert "A --> A : Z" in mermaid
+
+    # Dynamic - Should be a self-loop showing selector
+    assert "A --> A : R -> (<lambda>)" in mermaid
+
+
 def test_generate_mermaid_graph_substates():
     sm = StateMachine[Any, Trigger](SubA.A1)
     sm.configure(SubA.A1).substate_of(State.A).permit(Trigger.X, SubA.A2)
@@ -98,12 +147,12 @@ def test_generate_mermaid_graph_substates():
     # print(mermaid) # For debugging
 
     assert 'state "A" {' in mermaid
-    assert "A1 --> A2 : X" in mermaid  # Inside A
-    assert "} " in mermaid  # Closing A
-    assert "A2 --> B : Y" in mermaid  # Exiting A
-    assert "A --> C : Z" in mermaid  # From superstate A
-    assert "B --> A1 : R" in mermaid  # To substate A1
-    assert "[*] --> A1" in mermaid  # Initial state
+    assert "A1 --> A2 : X" in mermaid
+    assert "} " in mermaid
+    assert "A2 --> B : Y" in mermaid
+    assert "A --> C : Z" in mermaid
+    assert "B --> A1 : R" in mermaid
+    assert "[*] --> A1" in mermaid
 
 
 # TODO: Add tests for DOT and Mermaid graph generation
