@@ -20,6 +20,61 @@
 *   **Introspection:** Get a detailed structure of the machine (`get_info()`) using Pydantic models.
 *   **Graph Generation:** Visualize the state machine in DOT or Mermaid formats (`generate_dot_graph()`, `generate_mermaid_graph()`, `visualize()`).
 
+## Architecture Overview
+
+The library is structured into several key components, as shown in the diagram below. Click on a component to navigate to its source code. (The source diagram can be found in `docs/architecture.mmd`).
+
+```mermaid
+graph TD
+    subgraph "Configuration & Transition Modules"
+        CFG["State Configuration"]:::config
+        TRANS["Transition Manager"]:::config
+    end
+
+    subgraph "Core Engine"
+        CORE["State Machine Engine"]:::core
+    end
+
+    subgraph "Processing Components"
+        ACT["Action Executor"]:::processing
+        FIRE["Firing Modes"]:::processing
+        GUARD["Guard Evaluation"]:::processing
+    end
+
+    subgraph "Visualization & Introspection"
+        GRAPH["Graph Generator"]:::viz
+        INTROSPECT["Introspection & Reflection"]:::viz
+    end
+
+    ERROR["Error Handling"]:::error
+
+    CFG --> CORE
+    TRANS --> CORE
+    CORE --> ACT
+    CORE --> FIRE
+    CORE --> GUARD
+    CORE --> GRAPH
+    CORE --> INTROSPECT
+    CORE --> ERROR
+    GUARD --> ERROR
+
+    click CORE "https://github.com/alti3/stateless-py/blob/main/src/stateless/state_machine.py"
+    click CFG "https://github.com/alti3/stateless-py/blob/main/src/stateless/state_configuration.py"
+    click TRANS "https://github.com/alti3/stateless-py/blob/main/src/stateless/transition.py"
+    click ACT "https://github.com/alti3/stateless-py/blob/main/src/stateless/actions.py"
+    click FIRE "https://github.com/alti3/stateless-py/blob/main/src/stateless/firing_modes.py"
+    click GUARD "https://github.com/alti3/stateless-py/blob/main/src/stateless/guards.py"
+    click GRAPH "https://github.com/alti3/stateless-py/blob/main/src/stateless/graph.py"
+    click INTROSPECT "https://github.com/alti3/stateless-py/blob/main/src/stateless/reflection.py"
+    click ERROR "https://github.com/alti3/stateless-py/blob/main/src/stateless/exceptions.py"
+
+    classDef config fill:#ADD8E6,stroke:#000,stroke-width:2px;
+    classDef core fill:#90EE90,stroke:#000,stroke-width:2px;
+    classDef processing fill:#FFDAB9,stroke:#000,stroke-width:2px;
+    classDef viz fill:#D8BFD8,stroke:#000,stroke-width:2px;
+    classDef error fill:#FFB6C1,stroke:#000,stroke-width:2px;
+```
+
 ## Installation
 
 ```bash
