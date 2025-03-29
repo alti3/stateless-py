@@ -1,6 +1,6 @@
 # Stateless-py
 
-[![CI](https://github.com/yourusername/stateless-py/actions/workflows/python-ci.yml/badge.svg)](https://github.com/yourusername/stateless-py/actions/workflows/python-ci.yml)
+[![CI](https://github.com/alti3/stateless-py/actions/workflows/python-ci.yml/badge.svg)](https://github.com/alti3/stateless-py/actions/workflows/python-ci.yml)
 [![PyPI version](https://badge.fury.io/py/stateless-py.svg)](https://badge.fury.io/py/stateless-py) <!-- TODO: Update when published -->
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
