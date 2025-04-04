@@ -350,6 +350,58 @@ print(mermaid_graph)
 # (Actual output will depend on machine configuration)
 ```
 
+# Parity with origical C#/dotnet package
+This is a comparison table outlining the features of the C# `Stateless` library and their implementation status in the Python port `stateless-py`.
+
+| Feature (C#)                                       | Implemented in Python Port? | Notes                                                                                                                                  |
+| :------------------------------------------------- | :-------------------------- | :------------------------------------------------------------------------------------------------------------------------------------- |
+| **Core Functionality**                             |                             |                                                                                                                                        |
+| Generic States (`TState`)                          | Yes                         | Python uses `typing.TypeVar` and generics (`StateMachine[StateT, TriggerT]`).                                                            |
+| Generic Triggers (`TTrigger`)                      | Yes                         | Python uses `typing.TypeVar` and generics (`StateMachine[StateT, TriggerT]`).                                                            |
+| State Machine Instantiation                        | Yes                         | `StateMachine(initial_state)`                                                                                                          |
+| Fluent Configuration API (`Configure`)             | Yes                         | `sm.configure(state)` returns a `StateConfiguration` object.                                                                            |
+| Basic Transitions (`Permit`)                       | Yes                         | `permit(trigger, destination_state)`                                                                                                     |
+| External State Storage (`stateAccessor/Mutator`)   | Yes                         | Python constructor accepts `state_accessor` and `state_mutator` callables.                                                               |
+| **State Actions**                                  |                             |                                                                                                                                        |
+| Entry Actions (`OnEntry`)                          | Yes                         | `on_entry(action)`                                                                                                                     |
+| Entry Actions from Trigger (`OnEntryFrom`)         | Yes                         | `on_entry_from(trigger, action)`                                                                                                       |
+| Exit Actions (`OnExit`)                            | Yes                         | `on_exit(action)`                                                                                                                      |
+| Activation Actions (`OnActivate`)                  | Yes                         | `on_activate(action)`                                                                                                                  |
+| Deactivation Actions (`OnDeactivate`)              | Yes                         | `on_deactivate(action)`                                                                                                                |
+| **Transition Control**                             |                             |                                                                                                                                        |
+| Guard Clauses (`PermitIf`)                         | Yes                         | `permit_if(trigger, dest, guard)`, `ignore_if`, `permit_reentry_if`, `internal_transition` with `guard`. Guards can be sync or async. |
+| Ignored Triggers (`Ignore`, `IgnoreIf`)            | Yes                         | `ignore(trigger)`, `ignore_if(trigger, guard)`                                                                                         |
+| Reentrant States (`PermitReentry`, `PermitReentryIf`) | Yes                         | `permit_reentry(trigger)`, `permit_reentry_if(trigger, guard)`                                                                         |
+| Internal Transitions (`InternalTransition`)        | Yes                         | `internal_transition(trigger, action, guard)`                                                                                          |
+| Dynamic Transitions (`PermitDynamic`, `PermitDynamicIf`) | Yes                         | `dynamic(trigger, selector, guard)`                                                                                                    |
+| **Hierarchy (Substates)**                          |                             |                                                                                                                                        |
+| Substates (`SubstateOf`)                           | Yes                         | `substate_of(superstate)`                                                                                                              |
+| Superstate Trigger Handling                        | Yes                         | Triggers not handled in a substate bubble up to superstates.                                                                             |
+| Hierarchical Action Execution (Entry/Exit order)   | Yes                         | Python's `StateRepresentation.enter/exit` implement hierarchical execution.                                                              |
+| `IsInState` Check                                  | Yes                         | `is_in_state(state)` checks current state and superstates.                                                                               |
+| Initial Transitions (`InitialTransition`)            | Yes                         | `initial_transition(target_state)` on the superstate's configuration.                                                                  |
+| **Triggers & Parameters**                          |                             |                                                                                                                                        |
+| Parameterized Triggers (`SetTriggerParameters`)      | Yes                         | `set_trigger_parameters(trigger, *param_types)` for introspection. Actual params passed via `fire()` args.                               |
+| Parameterized Actions/Guards                       | Yes                         | Actions/guards can accept parameters passed during `fire()` (via `*args` or named parameters).                                           |
+| Typed Trigger Classes (`TriggerWithParameters<T>`) | No                          | Python passes parameters directly via `fire(*args)` rather than using specific trigger wrapper classes.                                    |
+| **Asynchronous Operations**                        |                             |                                                                                                                                        |
+| Async Actions (`OnEntryAsync`, etc.)               | Yes                         | Python uses `async def` for actions/guards and configures them with the standard methods (`on_entry`, `permit_if`, etc.).                |
+| Async Firing (`FireAsync`)                         | Yes                         | `fire_async(trigger, *args)`                                                                                                           |
+| Async Guards                                       | Yes                         | `async def` functions can be used as guards with `permit_if` etc. when using `fire_async`.                                                |
+| Async Dynamic Destination Selector                 | Yes                         | The selector function passed to `dynamic()` can be an `async def` function.                                                                |
+| **Introspection & Visualization**                  |                             |                                                                                                                                        |
+| Get Machine Info (`GetInfo`)                       | Yes                         | `get_info()` returns a `StateMachineInfo` Pydantic model.                                                                                |
+| Reflection API (`StateMachineInfo`, etc.)        | Yes                         | Python uses Pydantic models in `reflection.py` for a similar purpose.                                                                    |
+| Export to DOT Graph (`UmlDotGraph.Format`)         | Yes                         | `generate_dot_graph()` produces DOT format.                                                                                              |
+| Visualize Graph (`graphviz` integration)           | Yes                         | `visualize()` helper function (requires `graphviz` library and executable).                                                              |
+| Export to Mermaid Graph (`MermaidGraph.Format`)    | Yes                         | `generate_mermaid_graph()` produces Mermaid format.                                                                                      |
+| **Advanced Features**                              |                             |                                                                                                                                        |
+| Unhandled Trigger Handler (`OnUnhandledTrigger`)   | Yes                         | `on_unhandled_trigger(handler)`, `on_unhandled_trigger_async(handler)`                                                                   |
+| Transition Events (`OnTransitioned`)               | Partial                     | Python has an `on_transitioned_callback` parameter in the `StateMachine` constructor. C# also has `OnTransitionCompleted`.                |
+| Transition Completed Event (`OnTransitionCompleted`) | No                          | No direct equivalent found in the provided Python code.                                                                                  |
+| Firing Modes (`FiringMode.Immediate`, `Queued`)    | Yes                         | `FiringMode` enum and `firing_mode` constructor parameter exist. Queue processing logic is present for `QUEUED`.                       |
+| `RetainSynchronizationContext`                     | No                          | Specific to .NET `SynchronizationContext`, not applicable to Python `asyncio`.                                                             |
+
 ## Development
 
 1.  Clone the repository.
