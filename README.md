@@ -91,7 +91,7 @@ git clone https://github.com/alti3/stateless-py.git # TODO: Replace with your re
 cd stateless-py
 
 # Install in editable mode with development dependencies
-pip install -e ".[dev]"
+uv pip install -e ".[dev]"
 ```
 
 ## Basic Usage
@@ -405,11 +405,10 @@ This is a comparison table outlining the features of the C# `Stateless` library 
 ## Development
 
 1.  Clone the repository.
-2.  Create a virtual environment: `python -m venv .venv`
-3.  Activate it: `source .venv/bin/activate` (or `.\.venv\Scripts\activate` on Windows)
-4.  Install dependencies: `pip install -e ".[dev]"`
-5.  Run tests: `pytest`
-6.  Run linters/formatters: `ruff check . && ruff format .` (or use `pre-commit install`)
+2.  Create virtual environment and install dependancies: `uv sync`
+3.  Install dependencies: `uv pip install -e ".[dev]"`
+4.  Run tests: `uvx pytest`
+5.  Run linters/formatters: `uvx ruff check . && uxv ruff format .` (or use `pre-commit install`)
 
 ## Contributing
 
