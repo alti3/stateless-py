@@ -1,6 +1,6 @@
 import pytest
 from enum import Enum, auto
-from typing import List, Any
+from typing import Any
 
 from stateless import StateMachine
 from stateless.exceptions import ConfigurationError
@@ -31,7 +31,7 @@ class Trigger(Enum):
     EXIT_A = auto()
 
 
-actions_log: List[str] = []
+actions_log: list[str] = []
 
 
 def setup_function():

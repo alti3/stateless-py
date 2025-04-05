@@ -1,6 +1,7 @@
 import pytest
 from enum import Enum, auto
-from typing import List, Sequence, Any
+from typing import Any
+from collections.abc import Sequence
 import asyncio
 
 from stateless import StateMachine, Transition, InvalidTransitionError
@@ -19,7 +20,7 @@ class Trigger(Enum):
 @pytest.mark.asyncio
 async def test_internal_transition_executes_action():
     """Tests that an internal transition executes its action."""
-    actions_executed: List[str] = []
+    actions_executed: list[str] = []
 
     def internal_action(transition: Transition[State, Trigger], args: Sequence[Any]):
         actions_executed.append(f"internal_action_{args[0]}")
@@ -72,7 +73,7 @@ async def test_internal_transition_specific_args():
 @pytest.mark.asyncio
 async def test_internal_transition_does_not_exit_enter():
     """Tests that internal transitions don't trigger exit/entry actions."""
-    actions_executed: List[str] = []
+    actions_executed: list[str] = []
 
     def internal_action():
         actions_executed.append("internal")
@@ -98,7 +99,7 @@ async def test_internal_transition_does_not_exit_enter():
 @pytest.mark.asyncio
 async def test_internal_transition_with_guards():
     """Tests guards on internal transitions."""
-    actions_executed: List[str] = []
+    actions_executed: list[str] = []
     can_run = False
 
     def internal_action():
@@ -128,7 +129,7 @@ async def test_internal_transition_with_guards():
 @pytest.mark.asyncio
 async def test_internal_transition_async_action():
     """Tests an internal transition with an async action."""
-    actions_executed: List[str] = []
+    actions_executed: list[str] = []
 
     async def internal_action_async():
         await asyncio.sleep(0.01)
@@ -144,7 +145,7 @@ async def test_internal_transition_async_action():
 
 def test_fire_sync_with_async_internal_action_raises_type_error():
     """Tests that fire() raises TypeError for async internal action."""
-    actions_executed: List[str] = []
+    actions_executed: list[str] = []
 
     async def internal_action_async():
         actions_executed.append("internal_async")

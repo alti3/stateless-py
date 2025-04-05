@@ -1,6 +1,5 @@
 import pytest
 from enum import Enum, auto
-from typing import List
 
 from stateless import StateMachine, InvalidTransitionError
 
@@ -17,7 +16,7 @@ class Trigger(Enum):
     MOVE = auto()
 
 
-actions_log: List[str] = []
+actions_log: list[str] = []
 
 
 def setup_function():

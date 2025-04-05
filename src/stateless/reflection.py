@@ -1,4 +1,5 @@
-from typing import List, Optional, Type, Any, Tuple, Union, Callable
+from typing import Type, Any
+from collections.abc import Callable
 from pydantic import BaseModel, Field
 import inspect
 
@@ -8,7 +9,7 @@ import inspect
 class InvocationInfo(BaseModel):
     """Describes a method or function used in the state machine configuration."""
 
-    method_name: Optional[str] = Field(
+    method_name: str | None = Field(
         None, description="The name of the method/function."
     )
     description: str = Field(
@@ -21,7 +22,7 @@ class InvocationInfo(BaseModel):
 
     @classmethod
     def from_callable(
-        cls, func: Callable[..., Any], description: Optional[str] = None
+        cls, func: Callable[..., Any], description: str | None = None
     ) -> "InvocationInfo":
         """Creates InvocationInfo from a callable."""
         method_name = getattr(func, "__name__", None)
@@ -60,7 +61,7 @@ class ActionInfo(BaseModel):
     method_description: InvocationInfo = Field(
         ..., description="Details of the action method."
     )
-    from_trigger: Optional[Any] = Field(
+    from_trigger: Any | None = Field(
         None, description="If the action is associated with a specific trigger."
     )
 
@@ -73,11 +74,11 @@ class TriggerInfo(BaseModel):
 
     underlying_trigger: Any = Field(..., description="The trigger object.")
     # Store parameter types explicitly if set via set_trigger_parameters
-    parameter_types: Optional[List[Type]] = Field(
+    parameter_types: list[Type] | None = Field(
         None, description="Explicitly defined types of parameters the trigger accepts."
     )
     # Store inferred parameter names/types from usage (e.g., action/guard signatures) as fallback/hint
-    inferred_parameter_signature: Optional[str] = Field(
+    inferred_parameter_signature: str | None = Field(
         None,
         description="Inferred parameter signature from usage (e.g., '(int, str)').",
     )
@@ -95,7 +96,7 @@ class TransitionInfo(BaseModel):
     destination_state: Any = Field(
         ..., description="The state that will be transitioned to."
     )
-    guard_conditions: List[GuardInfo] = Field(
+    guard_conditions: list[GuardInfo] = Field(
         default_factory=list,
         description="Guard conditions that must be met for the transition.",
     )
@@ -115,7 +116,7 @@ class DynamicStateInfo(BaseModel):
 class DynamicStateInfos(BaseModel):
     """Information about possible destination states of a dynamic transition"""
 
-    possible_destinations: List[DynamicStateInfo] = Field(
+    possible_destinations: list[DynamicStateInfo] = Field(
         default_factory=list, description="Possible destination states"
     )
 
@@ -129,11 +130,11 @@ class DynamicTransitionInfo(BaseModel):
     destination_state_selector_description: InvocationInfo = Field(
         ..., description="Details of the dynamic destination selector function."
     )
-    guard_conditions: List[GuardInfo] = Field(
+    guard_conditions: list[GuardInfo] = Field(
         default_factory=list,
         description="Guard conditions that must be met for the transition.",
     )
-    possible_destinations: Optional[DynamicStateInfos] = Field(
+    possible_destinations: DynamicStateInfos | None = Field(
         None, description="Possible destination states, if known"
     )
 
@@ -145,11 +146,11 @@ class InternalTransitionInfo(BaseModel):
     trigger: TriggerInfo = Field(
         ..., description="The trigger that causes this internal transition."
     )
-    actions: List[ActionInfo] = Field(
+    actions: list[ActionInfo] = Field(
         default_factory=list,
         description="Actions executed during the internal transition.",
     )
-    guard_conditions: List[GuardInfo] = Field(
+    guard_conditions: list[GuardInfo] = Field(
         default_factory=list, description="Guard conditions that must be met."
     )
 
@@ -161,7 +162,7 @@ class IgnoredTransitionInfo(BaseModel):
     """Information about an ignored trigger."""
 
     trigger: TriggerInfo = Field(..., description="The trigger that is ignored.")
-    guard_conditions: List[GuardInfo] = Field(
+    guard_conditions: list[GuardInfo] = Field(
         default_factory=list,
         description="Guard conditions that must be met for the trigger to be ignored.",
     )
@@ -174,40 +175,40 @@ class StateInfo(BaseModel):
     """Information about a single state."""
 
     underlying_state: Any = Field(..., description="The state object.")
-    entry_actions: List[ActionInfo] = Field(
+    entry_actions: list[ActionInfo] = Field(
         default_factory=list, description="Actions performed upon entering the state."
     )
-    exit_actions: List[ActionInfo] = Field(
+    exit_actions: list[ActionInfo] = Field(
         default_factory=list, description="Actions performed upon exiting the state."
     )
-    activate_actions: List[ActionInfo] = Field(
+    activate_actions: list[ActionInfo] = Field(
         default_factory=list, description="Actions performed when activating the state."
     )
-    deactivate_actions: List[ActionInfo] = Field(
+    deactivate_actions: list[ActionInfo] = Field(
         default_factory=list,
         description="Actions performed when deactivating the state.",
     )
-    substates: List["StateInfo"] = Field(
+    substates: list["StateInfo"] = Field(
         default_factory=list, description="Nested substates."
     )
     # Use Any for superstate_value to avoid type issues with different state types (Enum, str, etc.)
-    superstate_value: Optional[Any] = Field(
+    superstate_value: Any | None = Field(
         None, description="The value of the parent state, if this is a substate."
     )
-    fixed_transitions: List[TransitionInfo] = Field(
+    fixed_transitions: list[TransitionInfo] = Field(
         default_factory=list, description="Transitions permitted from this state."
     )
-    internal_transitions: List[InternalTransitionInfo] = Field(
+    internal_transitions: list[InternalTransitionInfo] = Field(
         default_factory=list, description="Internal transitions handled in this state."
     )
-    ignored_triggers: List[IgnoredTransitionInfo] = Field(
+    ignored_triggers: list[IgnoredTransitionInfo] = Field(
         default_factory=list, description="Triggers ignored in this state."
     )
-    dynamic_transitions: List[DynamicTransitionInfo] = Field(
+    dynamic_transitions: list[DynamicTransitionInfo] = Field(
         default_factory=list,
         description="Dynamic transitions permitted from this state.",
     )
-    initial_transition_target: Optional[Any] = Field(
+    initial_transition_target: Any | None = Field(
         None,
         description="The target state for the initial transition into this superstate.",
     )
@@ -223,7 +224,7 @@ class StateInfo(BaseModel):
 class StateMachineInfo(BaseModel):
     """Provides information about the structure of a state machine."""
 
-    states: List[StateInfo] = Field(
+    states: list[StateInfo] = Field(
         ..., description="All states configured in the machine."
     )
     state_type: Type = Field(..., description="The type of the state objects.")
@@ -236,7 +237,5 @@ class StateMachineInfo(BaseModel):
 
 
 # Helper type for callables used in configuration
-GuardDef = Tuple[Callable[..., bool], Optional[str]]
-ActionDef = Union[
-    Callable, Tuple[Callable, Optional[str]]
-]  # Action or (Action, Description)
+GuardDef = tuple[Callable[..., bool], str | None]
+ActionDef = Callable | tuple[Callable, str | None]

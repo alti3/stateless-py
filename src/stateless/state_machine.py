@@ -5,18 +5,11 @@ The main StateMachine class.
 # Placeholder - Core implementation to follow
 from typing import (
     Generic,
-    Optional,
-    Callable,
-    Sequence,
     Any,
-    Dict,
     Type,
-    List,
-    Awaitable,
-    Union,
-    Tuple,
     cast,
 )
+from collections.abc import Callable, Sequence, Awaitable
 from enum import Enum
 import asyncio
 import threading  # For potential future locking
@@ -81,36 +74,36 @@ class StateMachine(Generic[StateT, TriggerT]):
     def __init__(
         self,
         initial_state: StateT,
-        state_accessor: Optional[Callable[[], StateT]] = None,
-        state_mutator: Optional[Callable[[StateT], None]] = None,
+        state_accessor: Callable[[], StateT] | None = None,
+        state_mutator: Callable[[StateT], None] | None = None,
         firing_mode: FiringMode = FiringMode.IMMEDIATE,
     ):
         self._initial_state = initial_state
         self._state_accessor = state_accessor
         self._state_mutator = state_mutator
         self._firing_mode = firing_mode  # TODO: Implement queuing if QUEUED
-        self._state_representations: Dict[
+        self._state_representations: dict[
             StateT, StateRepresentation[StateT, TriggerT]
         ] = {}
         self._unmet_trigger_handler: UnmetTriggerHandler[StateT, TriggerT] = None
         self._unmet_trigger_handler_async: UnmetTriggerHandlerAsync[
             StateT, TriggerT
         ] = None
-        self._state_type: Optional[Type] = None
-        self._trigger_type: Optional[Type] = None
+        self._state_type: Type | None = None
+        self._trigger_type: Type | None = None
         self._lock = (
             threading.Lock()
         )  # Basic lock for thread safety on state changes/config access
         self._firing = False  # Simple flag to detect reentrant firing (sync only)
         self._queue = (
-            asyncio.Queue[Tuple[TriggerT, Sequence[Any]]]()
+            asyncio.Queue[tuple[TriggerT, Sequence[Any]]]()
             if firing_mode == FiringMode.QUEUED
             else None
         )
-        self._queue_processor_task: Optional[asyncio.Task] = None
+        self._queue_processor_task: asyncio.Task | None = None
         self._queue_started = False  # Flag to track if processor started
-        self._trigger_param_types: Dict[
-            TriggerT, List[Type]
+        self._trigger_param_types: dict[
+            TriggerT, list[Type]
         ] = {}  # Store explicit param types
 
         # Determine state/trigger types (best effort)
@@ -229,8 +222,8 @@ class StateMachine(Generic[StateT, TriggerT]):
         return rep
 
     def _find_common_ancestor(
-        self, s1: Optional[StateRepresentation], s2: Optional[StateRepresentation]
-    ) -> Optional[StateRepresentation]:
+        self, s1: StateRepresentation | None, s2: StateRepresentation | None
+    ) -> StateRepresentation | None:
         """Finds the nearest common ancestor state representation."""
         if s1 is None or s2 is None:
             return None
@@ -248,9 +241,9 @@ class StateMachine(Generic[StateT, TriggerT]):
 
     def _get_exit_actions(
         self, transition: Transition[StateT, TriggerT]
-    ) -> List[Callable[[], Awaitable[None]]]:
+    ) -> list[Callable[[], Awaitable[None]]]:
         """Gets the stack of exit actions to perform."""
-        actions: List[Callable[[], Awaitable[None]]] = []
+        actions: list[Callable[[], Awaitable[None]]] = []
         source_rep = self._get_representation(transition.source)
         dest_rep = self._get_representation(transition.destination)
         common_ancestor = self._find_common_ancestor(source_rep, dest_rep)
@@ -265,15 +258,15 @@ class StateMachine(Generic[StateT, TriggerT]):
 
     def _get_entry_actions(
         self, transition: Transition[StateT, TriggerT], args: Args
-    ) -> List[Callable[[], Awaitable[None]]]:
+    ) -> list[Callable[[], Awaitable[None]]]:
         """Gets the stack of entry actions to perform."""
-        actions: List[Callable[[], Awaitable[None]]] = []
+        actions: list[Callable[[], Awaitable[None]]] = []
         source_rep = self._get_representation(transition.source)
         dest_rep = self._get_representation(transition.destination)
         common_ancestor = self._find_common_ancestor(source_rep, dest_rep)
 
         # Build path from common ancestor down to destination
-        path: List[StateRepresentation[StateT, TriggerT]] = []
+        path: list[StateRepresentation[StateT, TriggerT]] = []
         current = dest_rep
         while current is not None and current != common_ancestor:
             path.append(current)
@@ -392,7 +385,7 @@ class StateMachine(Generic[StateT, TriggerT]):
         if isinstance(handler, IgnoredTriggerBehaviour):
             return  # Do nothing further
 
-        destination: Optional[StateT] = None
+        destination: StateT | None = None
         is_internal = False
 
         if isinstance(handler, ReentryTriggerBehaviour):
@@ -458,7 +451,7 @@ class StateMachine(Generic[StateT, TriggerT]):
                             )
                         curr = curr.superstate
                     # Check entry actions
-                    path: List[StateRepresentation[StateT, TriggerT]] = []
+                    path: list[StateRepresentation[StateT, TriggerT]] = []
                     curr = dest_representation
                     while curr is not None and curr != common_ancestor:
                         path.append(curr)
@@ -497,9 +490,7 @@ class StateMachine(Generic[StateT, TriggerT]):
         self, state: StateT, trigger: TriggerT, args: Args, sync_mode: bool
     ) -> None:
         """Calls the unmet trigger handler or raises an error."""
-        handler_to_call: Optional[
-            Union[UnmetTriggerHandler, UnmetTriggerHandlerAsync]
-        ] = None
+        handler_to_call: UnmetTriggerHandler | UnmetTriggerHandlerAsync | None = None
         is_async_handler = False
 
         if self._unmet_trigger_handler_async:
@@ -559,12 +550,12 @@ class StateMachine(Generic[StateT, TriggerT]):
 
     def _find_handler_sync(
         self, representation: StateRepresentation[StateT, TriggerT], trigger: TriggerT
-    ) -> Tuple[Optional[TriggerBehaviour[StateT, TriggerT]], bool]:
+    ) -> tuple[TriggerBehaviour[StateT, TriggerT] | None, bool]:
         """
         Synchronously finds a handler for the trigger, checking for async guards.
         Returns (handler, has_async_guard).
         """
-        rep: Optional[StateRepresentation[StateT, TriggerT]] = representation
+        rep: StateRepresentation[StateT, TriggerT] | None = representation
         while rep is not None:
             behaviours = rep.trigger_behaviours.get(trigger, [])
             if behaviours:  # Found potential handlers at this level
@@ -600,17 +591,17 @@ class StateMachine(Generic[StateT, TriggerT]):
             # Errors during guard evaluation mean it can't be fired
             return False
 
-    def get_permitted_triggers(self, *args: Any) -> List[TriggerT]:
+    def get_permitted_triggers(self, *args: Any) -> list[TriggerT]:
         """
         Gets the list of triggers permitted in the current state (synchronous check).
         Skips triggers that have asynchronous guards.
         """
-        permitted: List[TriggerT] = []
+        permitted: list[TriggerT] = []
         current_state = self.state
         representation = self._get_representation(current_state)
         processed_triggers = set()
 
-        rep: Optional[StateRepresentation[StateT, TriggerT]] = representation
+        rep: StateRepresentation[StateT, TriggerT] | None = representation
         while rep is not None:
             for trigger, behaviours in rep.trigger_behaviours.items():
                 if trigger in processed_triggers:
@@ -653,15 +644,15 @@ class StateMachine(Generic[StateT, TriggerT]):
 
         return permitted
 
-    async def get_permitted_triggers_async(self, *args: Any) -> List[TriggerT]:
+    async def get_permitted_triggers_async(self, *args: Any) -> list[TriggerT]:
         """Gets the list of triggers permitted in the current state (asynchronous check)."""
-        permitted: List[TriggerT] = []
+        permitted: list[TriggerT] = []
         current_state = self.state
         representation = self._get_representation(current_state)
         processed_triggers = set()
 
         # Check current state and all superstates
-        rep: Optional[StateRepresentation[StateT, TriggerT]] = representation
+        rep: StateRepresentation[StateT, TriggerT] | None = representation
         while rep is not None:
             for trigger, behaviours in rep.trigger_behaviours.items():
                 if trigger in processed_triggers:
@@ -737,7 +728,7 @@ class StateMachine(Generic[StateT, TriggerT]):
             InternalTriggerBehaviour,
         )
 
-        state_info_map: Dict[StateT, StateInfo] = {}
+        state_info_map: dict[StateT, StateInfo] = {}
 
         # Pass 1: Create all StateInfo objects without links initially
         for state, rep in self._state_representations.items():

@@ -1,7 +1,6 @@
 import pytest
 import asyncio
 from enum import Enum, auto
-from typing import List
 
 from stateless import StateMachine, FiringMode
 
@@ -20,7 +19,7 @@ class Trigger(Enum):
     Z = auto()
 
 
-actions_log: List[str] = []
+actions_log: list[str] = []
 
 
 def setup_function():

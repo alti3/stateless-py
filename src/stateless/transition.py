@@ -1,4 +1,5 @@
-from typing import TypeVar, Generic, Sequence, Any, Optional, Callable
+from typing import TypeVar, Generic, Any
+from collections.abc import Sequence, Callable, Awaitable
 
 StateT = TypeVar("StateT")
 TriggerT = TypeVar("TriggerT")
@@ -88,7 +89,5 @@ class InitialTransition(Transition[StateT, TriggerT]):
 
 
 # Type alias for the optional handler called when no transition is found for a trigger.
-UnmetTriggerHandler = Optional[Callable[[StateT, TriggerT, Sequence[Any]], None]]
-UnmetTriggerHandlerAsync = Optional[
-    Callable[[StateT, TriggerT, Sequence[Any]], Any]
-]  # Can be sync or async
+UnmetTriggerHandler = Callable[[StateT, TriggerT, Sequence[Any]], None] | None
+UnmetTriggerHandlerAsync = Callable[[StateT, TriggerT, Sequence[Any]], Awaitable[None]] | None

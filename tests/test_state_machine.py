@@ -1,6 +1,5 @@
 import pytest
 from enum import Enum, auto
-from typing import List
 import asyncio
 import time
 from unittest.mock import MagicMock, Mock
@@ -94,7 +93,7 @@ def test_trigger_configured_for_different_state_raises_error():
 
 def test_unhandled_trigger_sync_handler():
     """Tests the synchronous unhandled trigger handler."""
-    unhandled_log: List[str] = []
+    unhandled_log: list[str] = []
 
     def handler(state, trigger, args):
         unhandled_log.append(f"Unhandled: {state=}, {trigger=}, {args=}")
@@ -115,7 +114,7 @@ def test_unhandled_trigger_sync_handler():
 @pytest.mark.asyncio
 async def test_unhandled_trigger_async_handler():
     """Tests the asynchronous unhandled trigger handler."""
-    unhandled_log: List[str] = []
+    unhandled_log: list[str] = []
 
     async def handler(state, trigger, args):
         unhandled_log.append(f"Unhandled: {state=}, {trigger=}, {args=}")
@@ -136,7 +135,7 @@ async def test_unhandled_trigger_async_handler():
 @pytest.mark.asyncio
 async def test_unhandled_trigger_sync_handler_called_by_async():
     """Tests calling a sync unhandled handler via fire_async."""
-    unhandled_log: List[str] = []
+    unhandled_log: list[str] = []
 
     def handler(state, trigger, args):
         unhandled_log.append("Sync handler called")
@@ -336,8 +335,8 @@ def test_sync_transition_completed_callback() -> None:
     class TestTrigger(Enum):
         X = auto()
 
-    execution_order: List[str] = []
-    transition_info: List[Transition] = []
+    execution_order: list[str] = []
+    transition_info: list[Transition] = []
 
     def on_exit_a(t):
         execution_order.append("exit_a")
@@ -379,8 +378,8 @@ async def test_async_transition_completed_callback() -> None:
     class TestTrigger(Enum):
         X = auto()
 
-    execution_order: List[str] = []
-    transition_info: List[Transition] = []
+    execution_order: list[str] = []
+    transition_info: list[Transition] = []
 
     async def on_exit_a(t):
         await asyncio.sleep(0.01)
@@ -425,9 +424,9 @@ async def test_both_transition_completed_callbacks_async_fire() -> None:
     class TestTrigger(Enum):
         X = auto()
 
-    execution_order: List[str] = []
-    transition_info_sync: List[Transition] = []
-    transition_info_async: List[Transition] = []
+    execution_order: list[str] = []
+    transition_info_sync: list[Transition] = []
+    transition_info_async: list[Transition] = []
 
     async def on_exit_a(t):
         execution_order.append("exit_a")
@@ -474,8 +473,8 @@ def test_sync_transition_completed_internal_transition() -> None:
     class TestState(Enum): A = auto()
     class TestTrigger(Enum): X = auto()
 
-    execution_order: List[str] = []
-    transition_info: List[Transition] = []
+    execution_order: list[str] = []
+    transition_info: list[Transition] = []
 
     def internal_action(t):
         execution_order.append("internal_action")
@@ -509,8 +508,8 @@ async def test_async_transition_completed_reentry_transition() -> None:
     class TestState(Enum): A = auto()
     class TestTrigger(Enum): X = auto()
 
-    execution_order: List[str] = []
-    transition_info: List[Transition] = []
+    execution_order: list[str] = []
+    transition_info: list[Transition] = []
 
     async def on_exit_a(t):
         execution_order.append("exit_a")
@@ -549,8 +548,8 @@ async def test_async_transition_completed_queued_mode() -> None:
     class TestTrigger(Enum):
         X = auto()
 
-    execution_order: List[str] = []
-    transition_info: List[Transition] = []
+    execution_order: list[str] = []
+    transition_info: list[Transition] = []
     loop = asyncio.get_running_loop()
 
     async def on_exit_a(t):

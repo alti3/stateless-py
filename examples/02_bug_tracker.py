@@ -1,5 +1,4 @@
 from enum import Enum, auto
-from typing import Optional, Tuple
 
 from stateless import StateMachine, Transition, InvalidTransitionError
 
@@ -23,7 +22,7 @@ class Trigger(Enum):
 class Bug:
     def __init__(self, title: str, initial_state: State = State.OPEN):
         self.title = title
-        self._assignee: Optional[str] = None
+        self._assignee: str | None = None
         self._state = initial_state
         self.state_machine = self._create_state_machine(initial_state)
 
@@ -67,15 +66,15 @@ class Bug:
         return self.state_machine.state  # Access via machine
 
     @property
-    def assignee(self) -> Optional[str]:
+    def assignee(self) -> str | None:
         return self._assignee
 
-    def _set_assignee(self, assignee: Optional[str]):
+    def _set_assignee(self, assignee: str | None):
         self._assignee = assignee
         print(f"Bug '{self.title}': Assignee set to {assignee or 'None'}")
 
     # Action for Assign trigger
-    def _assign(self, transition: Transition[State, Trigger], args: Tuple[str]):
+    def _assign(self, transition: Transition[State, Trigger], args: tuple[str]):
         assignee = args[0] if args else None
         if assignee:
             self._set_assignee(assignee)

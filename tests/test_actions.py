@@ -1,6 +1,7 @@
 import pytest
 from enum import Enum, auto
-from typing import List, Sequence, Any
+from typing import Any
+from collections.abc import Sequence
 
 from stateless import StateMachine, Transition
 
@@ -19,7 +20,7 @@ class Trigger(Enum):
     Z = auto()  # For entry_from
 
 
-actions_log: List[str] = []
+actions_log: list[str] = []
 
 # --- Sync Actions ---
 

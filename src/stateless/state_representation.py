@@ -5,12 +5,9 @@ Internal representation of a state and its associated behaviours (transitions, a
 # Placeholder - Core implementation to follow
 from typing import (
     Generic,
-    Optional,
-    List,
-    Dict,
-    Sequence,
     Any,
 )
+from collections.abc import Sequence
 
 from .transition import StateT, TriggerT, Transition, InitialTransition
 from .trigger_behaviour import TriggerBehaviour, TriggerBehaviourResult
@@ -29,16 +26,16 @@ class StateRepresentation(Generic[StateT, TriggerT]):
 
     def __init__(self, state: StateT):
         self._state = state
-        self._trigger_behaviours: Dict[
-            TriggerT, List[TriggerBehaviour[StateT, TriggerT]]
+        self._trigger_behaviours: dict[
+            TriggerT, list[TriggerBehaviour[StateT, TriggerT]]
         ] = {}
-        self._entry_actions: List[EntryActionBehaviour[StateT, TriggerT]] = []
-        self._exit_actions: List[ExitActionBehaviour[StateT, TriggerT]] = []
-        self._activate_actions: List[ActivateActionBehaviour[StateT, TriggerT]] = []
-        self._deactivate_actions: List[DeactivateActionBehaviour[StateT, TriggerT]] = []
-        self._substates: List["StateRepresentation[StateT, TriggerT]"] = []
-        self._superstate: Optional["StateRepresentation[StateT, TriggerT]"] = None
-        self._initial_transition_target: Optional[StateT] = (
+        self._entry_actions: list[EntryActionBehaviour[StateT, TriggerT]] = []
+        self._exit_actions: list[ExitActionBehaviour[StateT, TriggerT]] = []
+        self._activate_actions: list[ActivateActionBehaviour[StateT, TriggerT]] = []
+        self._deactivate_actions: list[DeactivateActionBehaviour[StateT, TriggerT]] = []
+        self._substates: list["StateRepresentation[StateT, TriggerT]"] = []
+        self._superstate: StateRepresentation[StateT, TriggerT] | None = None
+        self._initial_transition_target: StateT | None = (
             None  # For initial transition into this superstate
         )
 
@@ -47,47 +44,47 @@ class StateRepresentation(Generic[StateT, TriggerT]):
         return self._state
 
     @property
-    def substates(self) -> List["StateRepresentation[StateT, TriggerT]"]:
+    def substates(self) -> list["StateRepresentation[StateT, TriggerT]"]:
         return self._substates
 
     @property
-    def superstate(self) -> Optional["StateRepresentation[StateT, TriggerT]"]:
+    def superstate(self) -> "StateRepresentation[StateT, TriggerT]" | None:
         return self._superstate
 
     @superstate.setter
     def superstate(
-        self, value: Optional["StateRepresentation[StateT, TriggerT]"]
+        self, value: "StateRepresentation[StateT, TriggerT]" | None
     ) -> None:
         self._superstate = value
 
     @property
-    def entry_actions(self) -> List[EntryActionBehaviour[StateT, TriggerT]]:
+    def entry_actions(self) -> list[EntryActionBehaviour[StateT, TriggerT]]:
         return self._entry_actions
 
     @property
-    def exit_actions(self) -> List[ExitActionBehaviour[StateT, TriggerT]]:
+    def exit_actions(self) -> list[ExitActionBehaviour[StateT, TriggerT]]:
         return self._exit_actions
 
     @property
-    def activate_actions(self) -> List[ActivateActionBehaviour[StateT, TriggerT]]:
+    def activate_actions(self) -> list[ActivateActionBehaviour[StateT, TriggerT]]:
         return self._activate_actions
 
     @property
-    def deactivate_actions(self) -> List[DeactivateActionBehaviour[StateT, TriggerT]]:
+    def deactivate_actions(self) -> list[DeactivateActionBehaviour[StateT, TriggerT]]:
         return self._deactivate_actions
 
     @property
     def trigger_behaviours(
         self,
-    ) -> Dict[TriggerT, List[TriggerBehaviour[StateT, TriggerT]]]:
+    ) -> dict[TriggerT, list[TriggerBehaviour[StateT, TriggerT]]]:
         return self._trigger_behaviours
 
     @property
-    def initial_transition_target(self) -> Optional[StateT]:
+    def initial_transition_target(self) -> StateT | None:
         return self._initial_transition_target
 
     @initial_transition_target.setter
-    def initial_transition_target(self, value: Optional[StateT]) -> None:
+    def initial_transition_target(self, value: StateT | None) -> None:
         self._initial_transition_target = value
 
     def add_trigger_behaviour(
@@ -169,10 +166,10 @@ class StateRepresentation(Generic[StateT, TriggerT]):
         self, trigger: TriggerT, args: Args
     ) -> TriggerBehaviourResult[StateT, TriggerT]:
         """Finds a handler for the trigger specifically within this state."""
-        possible: List[TriggerBehaviour[StateT, TriggerT]] = (
+        possible: list[TriggerBehaviour[StateT, TriggerT]] = (
             self._trigger_behaviours.get(trigger, [])
         )
-        unmet_guards: List[str] = []
+        unmet_guards: list[str] = []
 
         for behaviour in possible:
             guards_met = await behaviour.guard.conditions_met_async(args)
@@ -247,7 +244,7 @@ class StateRepresentation(Generic[StateT, TriggerT]):
 
     def _find_substate_representation(
         self, state: StateT
-    ) -> Optional["StateRepresentation[StateT, TriggerT]"]:
+    ) -> "StateRepresentation[StateT, TriggerT]" | None:
         """Finds a direct or indirect substate representation by state value."""
         if self.state == state:  # Should not happen for initial target, but check
             return self

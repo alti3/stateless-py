@@ -1,6 +1,6 @@
 import json
 from enum import Enum, auto
-from typing import Any, Dict
+from typing import Any
 
 from stateless import StateMachine
 
@@ -75,7 +75,7 @@ class Member:
         self._state_machine.fire(MemberTriggers.REACTIVATE)
 
     # --- Serialization ---
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize relevant data to a dictionary."""
         return {
             "name": self.name,
@@ -83,7 +83,7 @@ class Member:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Member":
+    def from_dict(cls, data: dict[str, Any]) -> "Member":
         """Deserialize from a dictionary."""
         name = data.get("name")
         state_name = data.get("state")

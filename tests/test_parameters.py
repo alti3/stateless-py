@@ -1,6 +1,7 @@
 import pytest
 from enum import Enum, auto
-from typing import List, Sequence, Any
+from typing import Any
+from collections.abc import Sequence
 
 from stateless import StateMachine, Transition, InvalidTransitionError, ConfigurationError
 
@@ -17,9 +18,9 @@ class Trigger(Enum):
     Y = auto()
 
 
-actions_log: List[Any] = []
-guard_log: List[Any] = []
-selector_log: List[Any] = []
+actions_log: list[Any] = []
+guard_log: list[Any] = []
+selector_log: list[Any] = []
 
 
 def setup_function():

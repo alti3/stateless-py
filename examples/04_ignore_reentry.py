@@ -1,5 +1,4 @@
 from enum import Enum, auto
-from typing import List
 
 from stateless import StateMachine, Transition
 
@@ -18,7 +17,7 @@ class Trigger(Enum):
 
 
 # --- Log ---
-log: List[str] = []
+log: list[str] = []
 
 
 # --- Actions ---

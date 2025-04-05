@@ -3,7 +3,7 @@ Contains functions for generating graph representations (DOT, Mermaid) of the st
 """
 
 # Placeholder - Implementation to follow
-from typing import TYPE_CHECKING, TypeVar, List, Optional, Any, Enum, Dict
+from typing import TYPE_CHECKING, TypeVar, Any, Enum
 
 if TYPE_CHECKING:
     from .state_machine import StateMachine  # Avoid circular import
@@ -30,7 +30,7 @@ def _get_trigger_name(trigger: Any) -> str:
     return str(trigger)
 
 
-def _format_guards(guards: List[Any]) -> str:  # Use GuardInfo later
+def _format_guards(guards: list[Any]) -> str:  # Use GuardInfo later
     """Formats guard conditions for display."""
     if not guards:
         return ""
@@ -44,14 +44,12 @@ def generate_dot_graph(sm_info: "StateMachineInfo") -> str:
     lines = ["digraph StateMachine {", "  compound=true; // Allow edges to clusters"]
     node_lines = []
     edge_lines = []
-    cluster_nodes: Dict[
-        str, str
-    ] = {}  # Map state name to cluster name if it's a cluster
+    cluster_nodes: dict[str, str] = {}  # Map state name to cluster name if it's a cluster
 
     processed_states = set()
 
     def add_nodes_and_edges(
-        states: List[StateInfo], parent_cluster_name: Optional[str] = None
+        states: list[StateInfo], parent_cluster_name: str | None = None
     ):
         nonlocal node_lines, edge_lines, cluster_nodes
         for state_info in states:
@@ -176,7 +174,7 @@ def generate_mermaid_graph(sm_info: "StateMachineInfo", direction: str = "TB") -
     edge_lines = []
     processed_states = set()
 
-    def add_mermaid_elements(states: List[StateInfo]):
+    def add_mermaid_elements(states: list[StateInfo]):
         nonlocal edge_lines
         for state_info in states:
             state_name = _get_state_name(state_info.underlying_state)

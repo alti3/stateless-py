@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from enum import Enum, auto
-from typing import Optional, Dict, Any
+from typing import Any
 
 from stateless import StateMachine, Transition
 
@@ -46,7 +46,7 @@ class Alarm:
         self._machine = StateMachine[AlarmState, AlarmCommand](
             lambda: self._state, lambda s: self._set_state(s)
         )
-        self._timers: Dict[str, Optional[asyncio.Task[Any]]] = {
+        self._timers: dict[str, asyncio.Task[Any] | None] = {
             "pre_arm": None,
             "pause": None,
             "trigger_delay": None,

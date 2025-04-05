@@ -7,11 +7,8 @@ from typing import (
     TypeVar,
     Generic,
     Type,
-    Tuple,
-    Callable,
-    Optional,
-    List,
 )
+from collections.abc import Callable
 
 StateT = TypeVar("StateT")
 TriggerT = TypeVar("TriggerT")
@@ -65,9 +62,9 @@ class TriggerWithParameters3(Generic[T1, T2, T3, TriggerT]):
 
 
 # Helper function to potentially create TriggerInfo with parameter types
-def get_parameter_types(func: Callable) -> Optional[List[Tuple[str, Type]]]:
+def get_parameter_types(func: Callable) -> list[tuple[str, Type]]:
     """Inspects a function (guard/action) to guess trigger parameter types."""
     # This is complex and potentially unreliable.
     # It depends on how parameters are passed (e.g., after Transition object).
     # Placeholder - needs careful design based on how actions/guards receive trigger args.
-    return None
+    return []

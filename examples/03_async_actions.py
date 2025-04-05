@@ -1,7 +1,6 @@
 import pytest  # Using pytest markers for async tests
 import asyncio
 from enum import Enum, auto
-from typing import List
 
 from stateless import StateMachine, Transition
 
@@ -20,7 +19,7 @@ class Trigger(Enum):
 
 
 # --- Log ---
-log: List[str] = []
+log: list[str] = []
 
 
 # --- Async Actions ---

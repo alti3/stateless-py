@@ -1,24 +1,18 @@
 import inspect
 from typing import (
-    Callable,
-    Sequence,
     Any,
-    Optional,
     Generic,
-    cast,
-    Awaitable,
-    Union,
-    Tuple,
-    List,
+    cast
 )
 from abc import ABC, abstractmethod
+from collections.abc import Sequence, Callable, Awaitable
 
 from .reflection import InvocationInfo, ActionDef
 from .transition import Transition, StateT, TriggerT
 from .exceptions import ConfigurationError
 
 Args = Sequence[Any]
-ActionFuncResult = Union[None, Awaitable[None]]
+ActionFuncResult = None | Awaitable[None]
 ActionFunc = Callable[..., ActionFuncResult]
 
 
@@ -279,7 +273,7 @@ class AsyncDeactivateAction(DeactivateActionBehaviour[StateT, TriggerT]):
 
 def _get_action_and_description(
     action_def: ActionDef,
-) -> Tuple[Callable, Optional[str]]:
+) -> tuple[Callable, str | None]:
     """Extracts the callable and optional description from ActionDef."""
     if isinstance(action_def, tuple):
         if (
@@ -301,7 +295,7 @@ def _get_action_and_description(
 
 
 def _build_wrapper(
-    action: Callable, expected_args: List[str], is_async: bool
+    action: Callable, expected_args: list[str], is_async: bool
 ) -> Callable[..., ActionFuncResult]:
     """Builds a wrapper function to adapt the user's action callable to the expected signature."""
     sig = inspect.signature(action)
@@ -384,7 +378,7 @@ def _build_wrapper(
 
 
 def create_entry_action_behavior(
-    action_def: ActionDef, trigger: Optional[TriggerT] = None
+    action_def: ActionDef, trigger: TriggerT | None = None
 ) -> EntryActionBehaviour[StateT, TriggerT]:
     """Factory to create sync/async entry action behaviors."""
     action, description_override = _get_action_and_description(action_def)

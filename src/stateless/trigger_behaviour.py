@@ -1,16 +1,10 @@
 from typing import (
     Generic,
-    Optional,
-    Sequence,
     Any,
-    List,
-    Callable,
     cast,
-    Tuple,
-    Awaitable,
-    Union,
 )
 from abc import ABC, abstractmethod
+from collections.abc import Sequence, Callable, Awaitable
 
 from .guards import TransitionGuard
 from .transition import StateT, TriggerT, Transition
@@ -23,7 +17,7 @@ from .exceptions import ConfigurationError
 from .actions import ActionFuncResult, _build_wrapper
 
 Args = Sequence[Any]
-DestinationStateSelector = Callable[..., Union[StateT, Awaitable[StateT]]]
+DestinationStateSelector = Callable[..., StateT | Awaitable[StateT]]
 
 
 class TriggerBehaviourResult(Generic[StateT, TriggerT]):
@@ -31,19 +25,19 @@ class TriggerBehaviourResult(Generic[StateT, TriggerT]):
 
     def __init__(
         self,
-        handler: Optional["TriggerBehaviour[StateT, TriggerT]"],
-        unmet_guard_conditions: List[str],
+        handler: "TriggerBehaviour[StateT, TriggerT]" | None,
+        unmet_guard_conditions: list[str],
     ):
         self._handler = handler
         self._unmet_guard_conditions = unmet_guard_conditions
 
     @property
-    def handler(self) -> Optional["TriggerBehaviour[StateT, TriggerT]"]:
+    def handler(self) -> "TriggerBehaviour[StateT, TriggerT]" | None:
         """The trigger behaviour that handles the trigger (if guards are met)."""
         return self._handler
 
     @property
-    def unmet_guard_conditions(self) -> List[str]:
+    def unmet_guard_conditions(self) -> list[str]:
         """Descriptions of guards that were not met."""
         return self._unmet_guard_conditions
 
@@ -73,7 +67,7 @@ class TriggerBehaviour(ABC, Generic[StateT, TriggerT]):
     @abstractmethod
     def results_in_transition_from(
         self, source: StateT, args: Args
-    ) -> Awaitable[Tuple[bool, Optional[StateT]]]:
+    ) -> Awaitable[tuple[bool, StateT | None]]:
         """
         Determines if this behaviour results in a transition from the given source state.
 
@@ -90,7 +84,7 @@ class TriggerBehaviour(ABC, Generic[StateT, TriggerT]):
         pass
 
     @abstractmethod
-    def get_guard_info(self) -> List[GuardInfo]:
+    def get_guard_info(self) -> list[GuardInfo]:
         """Gets reflection info for the guards."""
         pass
 
@@ -103,7 +97,7 @@ class IgnoredTriggerBehaviour(TriggerBehaviour[StateT, TriggerT]):
 
     async def results_in_transition_from(
         self, source: StateT, args: Args
-    ) -> Tuple[bool, Optional[StateT]]:
+    ) -> tuple[bool, StateT | None]:
         # Ignored transitions never result in a state change
         guards_met = await self.guard.conditions_met_async(args)
         return (
@@ -116,7 +110,7 @@ class IgnoredTriggerBehaviour(TriggerBehaviour[StateT, TriggerT]):
         # Parameter types might be unknown here unless explicitly provided during config
         return TriggerInfo(underlying_trigger=self.trigger)
 
-    def get_guard_info(self) -> List[GuardInfo]:
+    def get_guard_info(self) -> list[GuardInfo]:
         return [
             GuardInfo(method_description=g.method_description)
             for g in self.guard.conditions
@@ -136,7 +130,7 @@ class ReentryTriggerBehaviour(TriggerBehaviour[StateT, TriggerT]):
 
     async def results_in_transition_from(
         self, source: StateT, args: Args
-    ) -> Tuple[bool, Optional[StateT]]:
+    ) -> tuple[bool, StateT | None]:
         if source != self.destination:
             # This shouldn't happen if configured correctly, but as a safeguard
             raise ConfigurationError(
@@ -148,7 +142,7 @@ class ReentryTriggerBehaviour(TriggerBehaviour[StateT, TriggerT]):
     def get_trigger_info(self) -> TriggerInfo:
         return TriggerInfo(underlying_trigger=self.trigger)
 
-    def get_guard_info(self) -> List[GuardInfo]:
+    def get_guard_info(self) -> list[GuardInfo]:
         return [
             GuardInfo(method_description=g.method_description)
             for g in self.guard.conditions
@@ -163,7 +157,7 @@ class InternalTriggerBehaviour(TriggerBehaviour[StateT, TriggerT]):
         trigger: TriggerT,
         guard: TransitionGuard,
         action: Callable[..., ActionFuncResult],
-        description: Optional[str] = None,
+        description: str | None = None,
     ):
         super().__init__(trigger, guard)
         self._invocation_info = InvocationInfo.from_callable(action, description)
@@ -179,7 +173,7 @@ class InternalTriggerBehaviour(TriggerBehaviour[StateT, TriggerT]):
 
     async def results_in_transition_from(
         self, source: StateT, args: Args
-    ) -> Tuple[bool, Optional[StateT]]:
+    ) -> tuple[bool, StateT | None]:
         # Internal transitions don't change state, but guards must pass for action to run
         guards_met = await self.guard.conditions_met_async(args)
         # An internal transition is still considered a "result" if guards pass,
@@ -212,7 +206,7 @@ class InternalTriggerBehaviour(TriggerBehaviour[StateT, TriggerT]):
         # TODO: Infer parameter types from action signature?
         return TriggerInfo(underlying_trigger=self.trigger)
 
-    def get_guard_info(self) -> List[GuardInfo]:
+    def get_guard_info(self) -> list[GuardInfo]:
         return [
             GuardInfo(method_description=g.method_description)
             for g in self.guard.conditions
@@ -232,14 +226,14 @@ class TransitioningTriggerBehaviour(TriggerBehaviour[StateT, TriggerT]):
 
     async def results_in_transition_from(
         self, source: StateT, args: Args
-    ) -> Tuple[bool, Optional[StateT]]:
+    ) -> tuple[bool, StateT | None]:
         guards_met = await self.guard.conditions_met_async(args)
         return guards_met, self.destination if guards_met else None
 
     def get_trigger_info(self) -> TriggerInfo:
         return TriggerInfo(underlying_trigger=self.trigger)
 
-    def get_guard_info(self) -> List[GuardInfo]:
+    def get_guard_info(self) -> list[GuardInfo]:
         return [
             GuardInfo(method_description=g.method_description)
             for g in self.guard.conditions
@@ -254,7 +248,7 @@ class DynamicTriggerBehaviour(TriggerBehaviour[StateT, TriggerT]):
         trigger: TriggerT,
         destination_func: DestinationStateSelector,
         guard: TransitionGuard,
-        description: Optional[str] = None,  # Added description parameter
+        description: str | None = None,
     ):
         super().__init__(trigger, guard)
         self._destination_func = destination_func
@@ -287,7 +281,7 @@ class DynamicTriggerBehaviour(TriggerBehaviour[StateT, TriggerT]):
 
     async def results_in_transition_from(
         self, source: StateT, args: Args
-    ) -> Tuple[bool, Optional[StateT]]:
+    ) -> tuple[bool, StateT | None]:
         guards_met = await self.guard.conditions_met_async(args)
         if not guards_met:
             return False, None
@@ -303,7 +297,7 @@ class DynamicTriggerBehaviour(TriggerBehaviour[StateT, TriggerT]):
         # TODO: Infer parameter types from selector signature?
         return TriggerInfo(underlying_trigger=self.trigger)
 
-    def get_guard_info(self) -> List[GuardInfo]:
+    def get_guard_info(self) -> list[GuardInfo]:
         return [
             GuardInfo(method_description=g.method_description)
             for g in self.guard.conditions

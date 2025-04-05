@@ -1,29 +1,23 @@
 import inspect
 from typing import (
-    Callable,
-    Sequence,
     Any,
-    List,
-    Optional,
-    Tuple,
     Generic,
     TypeVar,
-    Awaitable,
-    Union,
 )
+from collections.abc import Sequence, Callable, Awaitable
 
 # Assuming reflection models are defined in reflection.py
 from .reflection import InvocationInfo, GuardDef
 
 T = TypeVar("T")
-GuardResult = Union[bool, Awaitable[bool]]
+GuardResult = bool | Awaitable[bool]
 
 
 class GuardCondition(Generic[T]):
     """Represents a single guard condition function."""
 
     def __init__(
-        self, method: Callable[..., GuardResult], description: Optional[str] = None
+        self, method: Callable[..., GuardResult], description: str | None = None
     ):
         if not callable(method):
             raise TypeError("Guard method must be callable.")
@@ -45,7 +39,7 @@ class GuardCondition(Generic[T]):
         """Detailed information about the guard function."""
         return self._invocation_info
 
-    def _check_args(self, args: Sequence[Any]) -> Tuple[bool, Sequence[Any]]:
+    def _check_args(self, args: Sequence[Any]) -> tuple[bool, Sequence[Any]]:
         """Determines if the guard can be called with args and returns the relevant slice."""
         try:
             sig = inspect.signature(self._method)
@@ -124,12 +118,12 @@ class TransitionGuard:
         self._conditions = tuple(conditions)  # Immutable sequence
 
     @property
-    def conditions(self) -> Tuple[GuardCondition, ...]:
+    def conditions(self) -> tuple[GuardCondition, ...]:
         """The guard conditions associated with this transition."""
         return self._conditions
 
     @property
-    def description_list(self) -> List[str]:
+    def description_list(self) -> list[str]:
         """A list of descriptions for all guard conditions."""
         return [c.description for c in self._conditions]
 
@@ -157,7 +151,7 @@ class TransitionGuard:
                 return False
         return True
 
-    def unmet_conditions(self, args: Sequence[Any]) -> List[str]:
+    def unmet_conditions(self, args: Sequence[Any]) -> list[str]:
         """
         Returns descriptions of unmet synchronous guard conditions.
         Raises TypeError if any guard is async.
@@ -168,7 +162,7 @@ class TransitionGuard:
             )
         return [c.description for c in self._conditions if not c.is_met(args)]
 
-    async def unmet_conditions_async(self, args: Sequence[Any]) -> List[str]:
+    async def unmet_conditions_async(self, args: Sequence[Any]) -> list[str]:
         """Returns descriptions of unmet guard conditions (sync and async)."""
         unmet = []
         for condition in self._conditions:

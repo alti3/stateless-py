@@ -5,13 +5,9 @@ Provides the fluent API for configuring states (Permit, Ignore, OnEntry, etc.).
 # Placeholder - Core implementation to follow
 from typing import (
     Generic,
-    Callable,
-    Sequence,
-    Optional,
-    Union,
     overload,
 )
-
+from collections.abc import Sequence, Callable
 from .transition import StateT, TriggerT
 from .state_representation import StateRepresentation
 from .guards import GuardDef, guards_from_definitions
@@ -41,7 +37,7 @@ if False:  # TYPE_CHECKING
 # --- Helper Function ---
 def _get_action_and_description(
     action_def: ActionDef,
-) -> tuple[Callable[..., ActionFuncResult], Optional[str]]:
+) -> tuple[Callable[..., ActionFuncResult], str | None]:
     """Extracts the callable action and its description from ActionDef."""
     if callable(action_def):
         return action_def, None
@@ -96,8 +92,8 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         self,
         trigger: TriggerT,
         destination_state: StateT,
-        guard: Union[Callable[..., bool], Sequence[GuardDef]] = (),
-        guard_description: Optional[str] = None,
+        guard: Callable[..., bool] | Sequence[GuardDef] = (),
+        guard_description: str | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]": ...
 
     @overload
@@ -113,10 +109,10 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         self,
         trigger: TriggerT,
         destination_state: StateT,
-        guard: Union[Callable[..., bool], Sequence[GuardDef]] = (),
-        guard_description: Optional[str] = None,
+        guard: Callable[..., bool] | Sequence[GuardDef] = (),
+        guard_description: str | None = None,
         *,
-        guards: Optional[Sequence[GuardDef]] = None,  # Keyword-only alternative
+        guards: Sequence[GuardDef] | None = None,  # Keyword-only alternative
     ) -> "StateConfiguration[StateT, TriggerT]":
         """
         Accept the specified trigger and transition to the destination state.
@@ -162,7 +158,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         trigger: TriggerT,
         destination_state: StateT,
         guard: Callable[..., bool],
-        guard_description: Optional[str] = None,
+        guard_description: str | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]":
         """
         Accept the specified trigger and transition to the destination state if the guard function returns True.
@@ -177,10 +173,10 @@ class StateConfiguration(Generic[StateT, TriggerT]):
     def permit_reentry(
         self,
         trigger: TriggerT,
-        guard: Union[Callable[..., bool], Sequence[GuardDef]] = (),
-        guard_description: Optional[str] = None,
+        guard: Callable[..., bool] | Sequence[GuardDef] = (),
+        guard_description: str | None = None,
         *,
-        guards: Optional[Sequence[GuardDef]] = None,
+        guards: Sequence[GuardDef] | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]":
         """Accept the specified trigger and perform reentry actions (exit/entry) for the current state."""
         self._validate_trigger_type(trigger)
@@ -209,7 +205,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         self,
         trigger: TriggerT,
         guard: Callable[..., bool],
-        guard_description: Optional[str] = None,
+        guard_description: str | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]":
         """Accept the specified trigger and perform reentry actions if the guard function returns True."""
         return self.permit_reentry(
@@ -221,10 +217,10 @@ class StateConfiguration(Generic[StateT, TriggerT]):
     def ignore(
         self,
         trigger: TriggerT,
-        guard: Union[Callable[..., bool], Sequence[GuardDef]] = (),
-        guard_description: Optional[str] = None,
+        guard: Callable[..., bool] | Sequence[GuardDef] = (),
+        guard_description: str | None = None,
         *,
-        guards: Optional[Sequence[GuardDef]] = None,
+        guards: Sequence[GuardDef] | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]":
         """Ignore the specified trigger when in this state."""
         self._validate_trigger_type(trigger)
@@ -252,7 +248,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         self,
         trigger: TriggerT,
         guard: Callable[..., bool],
-        guard_description: Optional[str] = None,
+        guard_description: str | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]":
         """Ignore the specified trigger when in this state if the guard function returns True."""
         return self.ignore(trigger, guard=guard, guard_description=guard_description)
@@ -261,9 +257,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
     def on_entry(
         self,
         entry_action: ActionDef,
-        description: Optional[
-            str
-        ] = None,  # Allow overriding description even if tuple used
+        description: str | None = None,  # Allow overriding description even if tuple used
     ) -> "StateConfiguration[StateT, TriggerT]":
         """Specify an action to be executed when entering this state."""
         action_callable, desc_from_tuple = _get_action_and_description(entry_action)
@@ -285,7 +279,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         self,
         trigger: TriggerT,
         entry_action: ActionDef,
-        description: Optional[str] = None,
+        description: str | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]":
         """Specify an action to be executed when entering this state via the specified trigger."""
         self._validate_trigger_type(trigger)
@@ -304,7 +298,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
 
     # --- OnExit ---
     def on_exit(
-        self, exit_action: ActionDef, description: Optional[str] = None
+        self, exit_action: ActionDef, description: str | None = None
     ) -> "StateConfiguration[StateT, TriggerT]":
         """Specify an action to be executed when exiting this state."""
         action_callable, desc_from_tuple = _get_action_and_description(exit_action)
@@ -321,7 +315,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
 
     # --- OnActivate ---
     def on_activate(
-        self, activate_action: ActionDef, description: Optional[str] = None
+        self, activate_action: ActionDef, description: str | None = None
     ) -> "StateConfiguration[StateT, TriggerT]":
         """Specify an action to be executed when activating this state (entering state or initial state)."""
         action_callable, desc_from_tuple = _get_action_and_description(activate_action)
@@ -338,7 +332,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
 
     # --- OnDeactivate ---
     def on_deactivate(
-        self, deactivate_action: ActionDef, description: Optional[str] = None
+        self, deactivate_action: ActionDef, description: str | None = None
     ) -> "StateConfiguration[StateT, TriggerT]":
         """Specify an action to be executed when deactivating this state (exiting state)."""
         action_callable, desc_from_tuple = _get_action_and_description(
@@ -369,9 +363,9 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         self,
         trigger: TriggerT,
         action: Callable[..., ActionFuncResult],
-        guard: Union[Callable[..., bool], Sequence[GuardDef]] = (),
-        guard_description: Optional[str] = None,
-        action_description: Optional[str] = None,
+        guard: Callable[..., bool] | Sequence[GuardDef] = (),
+        guard_description: str | None = None,
+        action_description: str | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]": ...
 
     @overload
@@ -381,18 +375,18 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         action: Callable[..., ActionFuncResult],
         *,
         guards: Sequence[GuardDef] = (),
-        action_description: Optional[str] = None,
+        action_description: str | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]": ...
 
     def internal_transition(
         self,
         trigger: TriggerT,
         action: Callable[..., ActionFuncResult],
-        guard: Union[Callable[..., bool], Sequence[GuardDef]] = (),
-        guard_description: Optional[str] = None,
-        action_description: Optional[str] = None,
+        guard: Callable[..., bool] | Sequence[GuardDef] = (),
+        guard_description: str | None = None,
+        action_description: str | None = None,
         *,
-        guards: Optional[Sequence[GuardDef]] = None,
+        guards: Sequence[GuardDef] | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]":
         """
         Accept the specified trigger, execute the action, but do not transition state.
@@ -443,9 +437,9 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         self,
         trigger: TriggerT,
         destination_selector: DestinationStateSelector,
-        guard: Union[Callable[..., bool], Sequence[GuardDef]] = (),
-        guard_description: Optional[str] = None,
-        selector_description: Optional[str] = None,
+        guard: Callable[..., bool] | Sequence[GuardDef] = (),
+        guard_description: str | None = None,
+        selector_description: str | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]": ...
 
     @overload
@@ -455,18 +449,18 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         destination_selector: DestinationStateSelector,
         *,
         guards: Sequence[GuardDef] = (),
-        selector_description: Optional[str] = None,
+        selector_description: str | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]": ...
 
     def dynamic(
         self,
         trigger: TriggerT,
         destination_selector: DestinationStateSelector,
-        guard: Union[Callable[..., bool], Sequence[GuardDef]] = (),
-        guard_description: Optional[str] = None,
-        selector_description: Optional[str] = None,
+        guard: Callable[..., bool] | Sequence[GuardDef] = (),
+        guard_description: str | None = None,
+        selector_description: str | None = None,
         *,
-        guards: Optional[Sequence[GuardDef]] = None,
+        guards: Sequence[GuardDef] | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]":
         """
         Accept the specified trigger and transition to a state determined dynamically by the destination_selector function.
