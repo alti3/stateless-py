@@ -2,7 +2,6 @@
 The main StateMachine class.
 """
 
-# Placeholder - Core implementation to follow
 from typing import (
     Generic,
     Any,
@@ -12,10 +11,8 @@ from typing import (
 from collections.abc import Callable, Sequence, Awaitable
 from enum import Enum
 import asyncio
-import threading  # For potential future locking
-import inspect  # Added
-from contextlib import suppress
-from inspect import isawaitable
+import threading
+import inspect
 
 from .state_representation import StateRepresentation, Args  # Assuming this will exist
 from .state_configuration import StateConfiguration  # Assuming this will exist
@@ -47,22 +44,6 @@ from .trigger_behaviour import (
     TransitioningTriggerBehaviour,
     DynamicTriggerBehaviour,
 )
-from .actions import ActionSpecification, evaluate_action
-from .delegates import Action, AsyncAction, Guard, StateMutator, StateSelector
-from .delegates import SyncGuard, AsyncGuard, GuardConditions # Added GuardConditions
-from .exceptions import (
-    CannotFireTriggerError,
-    IgnoredTriggerError,
-    UnhandledTriggerError,
-)
-from .guards import evaluate_guards_async, evaluate_guards_sync
-from .ignoring import IgnoredTransition
-from .reflection import (
-    FixedTransitionInfo,
-    InitialTransitionInfo,
-    SuperstateInfo,
-)
-from .state_configuration import StateRepresentationMap
 
 
 # Placeholder implementation
@@ -81,7 +62,7 @@ class StateMachine(Generic[StateT, TriggerT]):
         self._initial_state = initial_state
         self._state_accessor = state_accessor
         self._state_mutator = state_mutator
-        self._firing_mode = firing_mode  # TODO: Implement queuing if QUEUED
+        self._firing_mode = firing_mode
         self._state_representations: dict[
             StateT, StateRepresentation[StateT, TriggerT]
         ] = {}
@@ -114,16 +95,25 @@ class StateMachine(Generic[StateT, TriggerT]):
 
         # Initialize current state
         if self._state_accessor and self._state_mutator:
-            # External state management - ensure initial state matches if possible
-            # Or should we set the external state to initial_state here? C# seems to read first.
-            self._current_state = self._state_accessor()
-            # TODO: What if external state != initial_state? Raise error? Set external?
+            try:
+                self._current_state = self._state_accessor()
+                if self._current_state != initial_state:
+                    import warnings
+
+                    warnings.warn(
+                        f"Initial state '{initial_state!r}' configured for the machine "
+                        f"does not match the state '{self._current_state!r}' obtained from the state accessor upon initialization. "
+                        f"Proceeding with state '{self._current_state!r}'.",
+                        RuntimeWarning,
+                    )
+            except Exception as e:
+                raise ConfigurationError(
+                    f"Error calling state accessor during initialization: {e}"
+                ) from e
         else:
             self._current_state = initial_state
             self._state_accessor = lambda: self._current_state
             self._state_mutator = self._set_internal_state
-
-        # TODO: Add lock for thread safety if needed, especially for QUEUED mode
 
         # Defer starting queue processor until first async fire if no loop running
         if self._firing_mode == FiringMode.QUEUED:
@@ -143,7 +133,6 @@ class StateMachine(Generic[StateT, TriggerT]):
 
     def configure(self, state: StateT) -> "StateConfiguration[StateT, TriggerT]":
         """Begin configuration of the specified state."""
-        # TODO: Implement StateConfiguration and StateRepresentation lookup/creation
         representation = self._get_or_add_state_representation(state)
         return StateConfiguration(
             self, representation, self._get_or_add_state_representation
@@ -153,10 +142,9 @@ class StateMachine(Generic[StateT, TriggerT]):
         self, state: StateT
     ) -> "StateRepresentation[StateT, TriggerT]":
         """Looks up or creates a StateRepresentation for the given state."""
-        # TODO: Implement actual logic
         if state not in self._state_representations:
-            # Placeholder: Create a new representation
-            self._state_representations[state] = StateRepresentation(state)  # type: ignore[call-arg] # Placeholder
+            # Create a new representation
+            self._state_representations[state] = StateRepresentation(state)
         return self._state_representations[state]
 
     def _ensure_queue_processor_started(self) -> None:
@@ -773,7 +761,6 @@ class StateMachine(Generic[StateT, TriggerT]):
 
                     # Create TriggerInfo with explicit param types if available
                     explicit_params = self._trigger_param_types.get(behaviour.trigger)
-                    # TODO: Add inferred signature logic if desired
                     trigger_info = TriggerInfo(
                         underlying_trigger=behaviour.trigger,
                         parameter_types=explicit_params,
@@ -800,13 +787,14 @@ class StateMachine(Generic[StateT, TriggerT]):
                                 destination_state=behaviour.destination,
                                 guard_conditions=guards,
                             )
-                        )  # Destination is self
+                        )
                     elif isinstance(behaviour, DynamicTriggerBehaviour):
                         dynamic_transitions.append(
                             DynamicTransitionInfo(
                                 trigger=trigger_info,
                                 destination_state_selector_description=behaviour.destination_func_info,
                                 guard_conditions=guards,
+                                possible_destinations=None,
                             )
                         )
                     elif isinstance(behaviour, InternalTriggerBehaviour):
@@ -882,35 +870,61 @@ class StateMachine(Generic[StateT, TriggerT]):
         # Note: __del__ is unreliable. Provide an explicit close method if robust cleanup is needed.
         if self._queue_processor_task and not self._queue_processor_task.done():
             print(
-                "Attempting to cancel queue processor task in __del__..."
-            )  # Debugging
+                "Warning: State machine garbage collected without explicit close_async. "
+                "Attempting to cancel queue processor task in __del__ (unreliable)..."
+            )  # Debugging/Warning
             try:
                 # Get loop associated with the task if possible
                 loop = self._queue_processor_task.get_loop()
                 if loop.is_running():
                     # Schedule cancellation from the loop if it's running
                     loop.call_soon_threadsafe(self._queue_processor_task.cancel)
-                    # Give loop a chance to process cancellation? This is tricky in __del__
+                    # Giving the loop a chance to process cancellation in __del__ is problematic.
+                    # This is a best-effort attempt.
                 else:
                     # If loop isn't running, cancellation might not work as expected
                     self._queue_processor_task.cancel()
             except Exception as e:
-                print(
-                    f"Error cancelling queue task in __del__: {e}"
-                )  # Avoid errors in __del__
+                # Avoid raising errors during garbage collection
+                print(f"Error attempting to cancel queue task in __del__: {e}")
 
     async def close_async(self) -> None:
-        """Gracefully shutdown the queue processor if running."""
-        if self._queue_processor_task and not self._queue_processor_task.done():
-            print("Closing state machine: Cancelling queue processor...")
-            self._queue_processor_task.cancel()
+        """
+        Gracefully shuts down the queue processor task if running.
+
+        This method should be called explicitly when the state machine is no longer needed,
+        especially when using `FiringMode.QUEUED`, to ensure the background task is
+        properly cancelled and awaited. Relying on garbage collection (`__del__`) for
+        this cleanup is unreliable.
+
+        This method is idempotent; calling it multiple times will have no effect after
+        the first successful closure.
+        """
+        task = self._queue_processor_task
+        if task and not task.done():
+            print("Closing state machine: Cancelling queue processor...")  # Debugging
+            task.cancel()
             try:
-                # Wait for the task to finish cancellation
-                await self._queue_processor_task
+                # Wait for the task to acknowledge cancellation and finish
+                await task
             except asyncio.CancelledError:
-                pass  # Expected exception on cancellation
+                # This is expected when cancelling the task
+                print("Queue processor task successfully cancelled.")  # Debugging
             except Exception as e:
+                # Log unexpected errors during shutdown
                 print(f"Error during queue processor shutdown: {e}")
             finally:
+                # Ensure flags are reset even if waiting raised an unexpected error
                 self._queue_started = False
-                print("Queue processor closed.")
+                self._queue_processor_task = None  # Mark as closed
+                print("Queue processor resources released.")  # Debugging
+        elif not task:
+            print(
+                "Close called but no queue processor task exists (already closed or never started)."
+            )  # Debugging
+        else:  # Task exists but is already done
+            print(
+                "Close called but queue processor task was already done."
+            )  # Debugging
+            self._queue_started = False  # Ensure flag is reset
+            self._queue_processor_task = None  # Mark as closed (or confirm it's done)

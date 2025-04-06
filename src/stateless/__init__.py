@@ -10,8 +10,6 @@ from .transition import Transition, StateT, TriggerT
 from .exceptions import StatelessError, InvalidTransitionError, ConfigurationError
 from .firing_modes import FiringMode
 
-# Optionally expose other elements like trigger parameterization helpers if needed
-
 __all__ = [
     "StateMachine",
     "StateConfiguration",

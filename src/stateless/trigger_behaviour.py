@@ -203,7 +203,6 @@ class InternalTriggerBehaviour(TriggerBehaviour[StateT, TriggerT]):
             sync_wrapped(transition, args)
 
     def get_trigger_info(self) -> TriggerInfo:
-        # TODO: Infer parameter types from action signature?
         return TriggerInfo(underlying_trigger=self.trigger)
 
     def get_guard_info(self) -> list[GuardInfo]:
@@ -294,7 +293,6 @@ class DynamicTriggerBehaviour(TriggerBehaviour[StateT, TriggerT]):
             raise
 
     def get_trigger_info(self) -> TriggerInfo:
-        # TODO: Infer parameter types from selector signature?
         return TriggerInfo(underlying_trigger=self.trigger)
 
     def get_guard_info(self) -> list[GuardInfo]:
@@ -302,6 +300,3 @@ class DynamicTriggerBehaviour(TriggerBehaviour[StateT, TriggerT]):
             GuardInfo(method_description=g.method_description)
             for g in self.guard.conditions
         ]
-
-
-# TODO: Add ParameterizedTriggerBehaviour if needed, or handle parameter types within existing behaviours.

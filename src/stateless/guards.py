@@ -1,4 +1,6 @@
 import inspect
+import warnings
+
 from typing import (
     Any,
     Generic,
@@ -58,13 +60,18 @@ class GuardCondition(Generic[T]):
             else:  # Not enough arguments provided for the guard
                 return False, ()
         except ValueError:  # inspect.signature can fail on some built-ins/C functions
-            # Assume it takes no args if signature fails? Or re-raise?
-            # Let's assume it might work with provided args or no args.
-            # This is a simplification. A more robust solution might be needed.
+            action_name = getattr(self._method, "__name__", "<unknown>")
+            warnings.warn(
+                f"Could not inspect signature of guard '{action_name}'. "
+                f"Assuming it accepts {'all provided arguments' if args else 'no arguments'}. "
+                f"Consider wrapping it in a standard Python function.",
+                RuntimeWarning,
+            )
+            # Keep the fallback logic for now, but with the warning.
             if len(args) > 0:
-                return True, args  # Try passing args
+                return True, args
             else:
-                return True, ()  # Try passing no args
+                return True, ()
 
     def is_met(self, args: Sequence[Any]) -> bool:
         """
@@ -174,11 +181,3 @@ class TransitionGuard:
 
 # Singleton for no guards
 EMPTY_GUARD = TransitionGuard([])
-
-
-# Helper function (might be redundant with from_definitions)
-def guards_from_definitions(definitions: Sequence[GuardDef]) -> TransitionGuard:
-    """Creates a TransitionGuard from a sequence of (callable, description) tuples."""
-    if not definitions:
-        return EMPTY_GUARD
-    return TransitionGuard.from_definitions(definitions)

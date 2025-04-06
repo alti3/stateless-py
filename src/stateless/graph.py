@@ -2,8 +2,8 @@
 Contains functions for generating graph representations (DOT, Mermaid) of the state machine.
 """
 
-# Placeholder - Implementation to follow
 from typing import TYPE_CHECKING, TypeVar, Any, Enum
+from .reflection import GuardInfo
 
 if TYPE_CHECKING:
     from .state_machine import StateMachine  # Avoid circular import
@@ -30,11 +30,10 @@ def _get_trigger_name(trigger: Any) -> str:
     return str(trigger)
 
 
-def _format_guards(guards: list[Any]) -> str:  # Use GuardInfo later
+def _format_guards(guards: list[GuardInfo]) -> str:
     """Formats guard conditions for display."""
     if not guards:
         return ""
-    # Assuming guards list contains GuardInfo objects
     descriptions = [g.method_description.description for g in guards]
     return f" [{', '.join(descriptions)}]"
 
@@ -44,7 +43,9 @@ def generate_dot_graph(sm_info: "StateMachineInfo") -> str:
     lines = ["digraph StateMachine {", "  compound=true; // Allow edges to clusters"]
     node_lines = []
     edge_lines = []
-    cluster_nodes: dict[str, str] = {}  # Map state name to cluster name if it's a cluster
+    cluster_nodes: dict[
+        str, str
+    ] = {}  # Map state name to cluster name if it's a cluster
 
     processed_states = set()
 

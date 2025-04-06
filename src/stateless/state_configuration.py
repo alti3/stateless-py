@@ -2,7 +2,6 @@
 Provides the fluent API for configuring states (Permit, Ignore, OnEntry, etc.).
 """
 
-# Placeholder - Core implementation to follow
 from typing import (
     Generic,
     overload,
@@ -76,9 +75,18 @@ class StateConfiguration(Generic[StateT, TriggerT]):
 
     def _validate_trigger_type(self, trigger: TriggerT) -> None:
         """Checks if the trigger type matches the machine's trigger type, if known."""
-        # TODO: Implement type checking logic if machine._trigger_type is set
+        # Check trigger type against machine's type if known
+        if self._machine._trigger_type is not None and not isinstance(
+            trigger, self._machine._trigger_type
+        ):
+            # A simple isinstance check covers most cases well, including Enums derived from a base type.
+            # If strict Enum matching (e.g., only members of the *exact* Enum type) is desired,
+            # you might compare type(trigger) == self._machine._trigger_type, but isinstance is generally more flexible.
+            raise ConfigurationError(
+                f"Trigger {trigger!r} (type: {type(trigger).__name__}) does not match machine's expected trigger type {self._machine._trigger_type.__name__}."
+            )
 
-        # Placeholder: Basic check if trigger is hashable (required for dict keys)
+        # Check hashable (required for dict keys)
         try:
             hash(trigger)
         except TypeError:
@@ -257,7 +265,8 @@ class StateConfiguration(Generic[StateT, TriggerT]):
     def on_entry(
         self,
         entry_action: ActionDef,
-        description: str | None = None,  # Allow overriding description even if tuple used
+        description: str
+        | None = None,  # Allow overriding description even if tuple used
     ) -> "StateConfiguration[StateT, TriggerT]":
         """Specify an action to be executed when entering this state."""
         action_callable, desc_from_tuple = _get_action_and_description(entry_action)
@@ -423,8 +432,6 @@ class StateConfiguration(Generic[StateT, TriggerT]):
             )
 
         transition_guard = guards_from_definitions(guard_defs)
-        # TODO: Wrap the action properly similar to how entry/exit actions are wrapped
-        # For now, pass the raw action; InternalTriggerBehaviour needs refinement
         behaviour = InternalTriggerBehaviour(
             trigger, transition_guard, action, action_description
         )
@@ -510,7 +517,6 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         Specifies the target state for the initial transition into this superstate.
         This state must be configured as a superstate (or have substates).
         """
-        # Ensure target is actually a substate (or sub-substate, etc.)? C# doesn't seem to enforce this strictly at config time.
         target_rep = self._lookup_func(
             target_state
         )  # Ensure target state exists in config
@@ -521,9 +527,6 @@ class StateConfiguration(Generic[StateT, TriggerT]):
 
         self._representation.initial_transition_target = target_state
         return self
-
-    # --- Trigger Parameters ---
-    # TODO: Add methods for configuring parameterized triggers if needed (e.g., `trigger_with_parameters`)
 
     def __repr__(self) -> str:
         return f"StateConfiguration(state={self.state!r})"

@@ -90,4 +90,6 @@ class InitialTransition(Transition[StateT, TriggerT]):
 
 # Type alias for the optional handler called when no transition is found for a trigger.
 UnmetTriggerHandler = Callable[[StateT, TriggerT, Sequence[Any]], None] | None
-UnmetTriggerHandlerAsync = Callable[[StateT, TriggerT, Sequence[Any]], Awaitable[None]] | None
+UnmetTriggerHandlerAsync = (
+    Callable[[StateT, TriggerT, Sequence[Any]], Awaitable[None]] | None
+)

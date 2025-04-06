@@ -2,7 +2,6 @@
 Internal representation of a state and its associated behaviours (transitions, actions).
 """
 
-# Placeholder - Core implementation to follow
 from typing import (
     Generic,
     Any,
@@ -52,9 +51,7 @@ class StateRepresentation(Generic[StateT, TriggerT]):
         return self._superstate
 
     @superstate.setter
-    def superstate(
-        self, value: "StateRepresentation[StateT, TriggerT]" | None
-    ) -> None:
+    def superstate(self, value: "StateRepresentation[StateT, TriggerT]" | None) -> None:
         self._superstate = value
 
     @property
@@ -253,16 +250,6 @@ class StateRepresentation(Generic[StateT, TriggerT]):
             if found:
                 return found
         return None
-
-    async def activate(self) -> None:
-        """Executes activate actions for this state and potentially substates."""
-        # TODO: Implement proper activation cascade if needed
-        await self._execute_activate_actions_async()
-
-    async def deactivate(self) -> None:
-        """Executes deactivate actions for this state and potentially substates."""
-        # TODO: Implement proper deactivation cascade if needed
-        await self._execute_deactivate_actions_async()
 
     # --- Internal Action Execution ---
     async def _execute_entry_actions_async(

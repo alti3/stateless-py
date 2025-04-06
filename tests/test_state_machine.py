@@ -1,13 +1,9 @@
 import pytest
 from enum import Enum, auto
 import asyncio
-import time
-from unittest.mock import MagicMock, Mock
 
 from stateless import StateMachine, InvalidTransitionError
-from stateless.exceptions import UnhandledTriggerError
 from stateless.firing_modes import FiringMode
-from stateless.state import State
 from stateless.transition import Transition
 
 # TODO: Add actual tests for StateMachine core functionality
@@ -196,9 +192,12 @@ def test_state_accessor_mutator():
 
 def test_state_accessor_raises_exception():
     """Tests when the state accessor raises an error."""
+
     def getter_error():
         raise ValueError("Cannot get state")
-    def setter(s): pass # pragma: no cover
+
+    def setter(s):
+        pass  # pragma: no cover
 
     # Error during initialization (accessor called after internal state set)
     with pytest.raises(ValueError, match="Cannot get state"):
@@ -209,13 +208,16 @@ def test_state_accessor_raises_exception():
     # Error during firing (accessor called before finding handler)
     external_state = {"current": State.A}
     getter_calls = 0
+
     def getter_error_later():
         nonlocal getter_calls
         getter_calls += 1
-        if getter_calls > 1: # Error on second call (during fire)
+        if getter_calls > 1:  # Error on second call (during fire)
             raise ValueError("Cannot get state later")
         return external_state["current"]
-    def setter_ok(s): external_state["current"] = s # pragma: no cover
+
+    def setter_ok(s):
+        external_state["current"] = s  # pragma: no cover
 
     sm = StateMachine[State, Trigger](
         State.A, state_accessor=getter_error_later, state_mutator=setter_ok
@@ -234,7 +236,10 @@ def test_state_accessor_raises_exception():
 def test_state_mutator_raises_exception():
     """Tests when the state mutator raises an error."""
     external_state = {"current": State.A}
-    def getter(): return external_state["current"]
+
+    def getter():
+        return external_state["current"]
+
     def setter_error(s):
         # Simulate failure during state update
         raise ValueError("Cannot set state")
@@ -256,9 +261,13 @@ def test_state_mutator_raises_exception():
 
 def test_initial_state_vs_accessor_mismatch():
     """Tests behavior when constructor initial_state differs from accessor."""
-    external_state = {"current": State.B} # Accessor returns B
-    def getter(): return external_state["current"]
-    def setter(s): external_state["current"] = s
+    external_state = {"current": State.B}  # Accessor returns B
+
+    def getter():
+        return external_state["current"]
+
+    def setter(s):
+        external_state["current"] = s
 
     # Initialize with A, but accessor returns B
     sm = StateMachine[State, Trigger](
@@ -266,7 +275,7 @@ def test_initial_state_vs_accessor_mismatch():
     )
 
     # What is the expected state? C# likely uses the accessor's value.
-    assert sm.state == State.B # Assert that accessor value takes precedence
+    assert sm.state == State.B  # Assert that accessor value takes precedence
     assert external_state["current"] == State.B
 
 
@@ -326,6 +335,7 @@ def test_get_permitted_triggers_sync_empty():
 
 # --- Transition Completed Callback Tests ---
 
+
 def test_sync_transition_completed_callback() -> None:
     # Arrange
     class TestState(Enum):
@@ -348,9 +358,7 @@ def test_sync_transition_completed_callback() -> None:
         execution_order.append("completed")
         transition_info.append(t)
 
-    sm = StateMachine(
-        TestState.A, on_transition_completed_callback=on_completed
-    )
+    sm = StateMachine(TestState.A, on_transition_completed_callback=on_completed)
     sm.configure(TestState.A).permit(TestTrigger.X, TestState.B).on_exit(on_exit_a)
     sm.configure(TestState.B).on_entry(on_entry_b)
 
@@ -461,7 +469,7 @@ async def test_both_transition_completed_callbacks_async_fire() -> None:
     assert len(transition_info_async) == 1
     t_sync = transition_info_sync[0]
     t_async = transition_info_async[0]
-    assert t_sync is t_async # Should be the same transition object
+    assert t_sync is t_async  # Should be the same transition object
     assert t_sync.source == TestState.A
     assert t_sync.destination == TestState.B
     assert t_sync.trigger == TestTrigger.X
@@ -470,8 +478,11 @@ async def test_both_transition_completed_callbacks_async_fire() -> None:
 
 def test_sync_transition_completed_internal_transition() -> None:
     # Arrange
-    class TestState(Enum): A = auto()
-    class TestTrigger(Enum): X = auto()
+    class TestState(Enum):
+        A = auto()
+
+    class TestTrigger(Enum):
+        X = auto()
 
     execution_order: list[str] = []
     transition_info: list[Transition] = []
@@ -483,21 +494,19 @@ def test_sync_transition_completed_internal_transition() -> None:
         execution_order.append("completed")
         transition_info.append(t)
 
-    sm = StateMachine(
-        TestState.A, on_transition_completed_callback=on_completed
-    )
+    sm = StateMachine(TestState.A, on_transition_completed_callback=on_completed)
     sm.configure(TestState.A).internal_transition(TestTrigger.X, internal_action)
 
     # Act
     sm.fire(TestTrigger.X, "param")
 
     # Assert
-    assert sm.state == TestState.A # State doesn't change
+    assert sm.state == TestState.A  # State doesn't change
     assert execution_order == ["internal_action", "completed"]
     assert len(transition_info) == 1
     t = transition_info[0]
     assert t.source == TestState.A
-    assert t.destination == TestState.A # Destination is same as source for internal
+    assert t.destination == TestState.A  # Destination is same as source for internal
     assert t.trigger == TestTrigger.X
     assert t.args == ("param",)
 
@@ -505,8 +514,11 @@ def test_sync_transition_completed_internal_transition() -> None:
 @pytest.mark.asyncio
 async def test_async_transition_completed_reentry_transition() -> None:
     # Arrange
-    class TestState(Enum): A = auto()
-    class TestTrigger(Enum): X = auto()
+    class TestState(Enum):
+        A = auto()
+
+    class TestTrigger(Enum):
+        X = auto()
 
     execution_order: list[str] = []
     transition_info: list[Transition] = []
@@ -524,7 +536,9 @@ async def test_async_transition_completed_reentry_transition() -> None:
     sm = StateMachine(
         TestState.A, on_transition_completed_async_callback=on_completed_async
     )
-    sm.configure(TestState.A).permit_reentry(TestTrigger.X).on_exit(on_exit_a).on_entry(on_entry_a)
+    sm.configure(TestState.A).permit_reentry(TestTrigger.X).on_exit(on_exit_a).on_entry(
+        on_entry_a
+    )
 
     # Act
     await sm.fire_async(TestTrigger.X)
@@ -535,9 +549,10 @@ async def test_async_transition_completed_reentry_transition() -> None:
     assert len(transition_info) == 1
     t = transition_info[0]
     assert t.source == TestState.A
-    assert t.destination == TestState.A # Destination is same as source for reentry
+    assert t.destination == TestState.A  # Destination is same as source for reentry
     assert t.trigger == TestTrigger.X
     assert t.args == ()
+
 
 @pytest.mark.asyncio
 async def test_async_transition_completed_queued_mode() -> None:
@@ -545,6 +560,7 @@ async def test_async_transition_completed_queued_mode() -> None:
     class TestState(Enum):
         A = auto()
         B = auto()
+
     class TestTrigger(Enum):
         X = auto()
 
@@ -567,7 +583,6 @@ async def test_async_transition_completed_queued_mode() -> None:
         # Add a small delay after completion callback finishes
         await asyncio.sleep(0.01)
 
-
     sm = StateMachine(
         TestState.A,
         firing_mode=FiringMode.QUEUED,
@@ -583,8 +598,10 @@ async def test_async_transition_completed_queued_mode() -> None:
 
     # Allow time for the queue processor to pick up and process the item
     # Wait significantly longer than the combined action/callback delays
-    await asyncio.wait_for(sm._queued_triggers.join(), timeout=0.5) # Wait for queue to empty
-    await asyncio.sleep(0.1) # Allow callbacks to finish after join
+    await asyncio.wait_for(
+        sm._queued_triggers.join(), timeout=0.5
+    )  # Wait for queue to empty
+    await asyncio.sleep(0.1)  # Allow callbacks to finish after join
 
     # Assert
     assert sm.state == TestState.B

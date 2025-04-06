@@ -49,7 +49,6 @@ class GuardInfo(BaseModel):
     method_description: InvocationInfo = Field(
         ..., description="Details of the guard method."
     )
-    # We might not need 'guard' itself here if method_description is sufficient
 
 
 # --- Action Info ---
@@ -76,11 +75,6 @@ class TriggerInfo(BaseModel):
     # Store parameter types explicitly if set via set_trigger_parameters
     parameter_types: list[Type] | None = Field(
         None, description="Explicitly defined types of parameters the trigger accepts."
-    )
-    # Store inferred parameter names/types from usage (e.g., action/guard signatures) as fallback/hint
-    inferred_parameter_signature: str | None = Field(
-        None,
-        description="Inferred parameter signature from usage (e.g., '(int, str)').",
     )
 
 

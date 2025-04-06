@@ -151,28 +151,23 @@ async def test_substate_action_order_full():
     sm = StateMachine[Any, Trigger](Parent.C)  # Start outside hierarchy
     sm.configure(Parent.C).permit(Trigger.GO_A1, ChildA.A1)
 
-    sm.configure(ChildA.A1).substate_of(Parent.A)\
-        .on_entry(entry(ChildA.A1))\
-        .on_exit(exit_(ChildA.A1))\
-        .on_activate(activate(ChildA.A1))\
-        .on_deactivate(deactivate(ChildA.A1))\
-        .permit(Trigger.GO_B1, ChildB.B1)
+    sm.configure(ChildA.A1).substate_of(Parent.A).on_entry(entry(ChildA.A1)).on_exit(
+        exit_(ChildA.A1)
+    ).on_activate(activate(ChildA.A1)).on_deactivate(deactivate(ChildA.A1)).permit(
+        Trigger.GO_B1, ChildB.B1
+    )
 
-    sm.configure(Parent.A)\
-        .on_entry(entry(Parent.A))\
-        .on_exit(exit_(Parent.A))\
-        .on_activate(activate(Parent.A))\
-        .on_deactivate(deactivate(Parent.A))
+    sm.configure(Parent.A).on_entry(entry(Parent.A)).on_exit(
+        exit_(Parent.A)
+    ).on_activate(activate(Parent.A)).on_deactivate(deactivate(Parent.A))
 
-    sm.configure(ChildB.B1).substate_of(Parent.B)\
-        .on_entry(entry(ChildB.B1))\
-        .on_activate(activate(ChildB.B1))
-        # No exit/deactivate needed for this test path
+    sm.configure(ChildB.B1).substate_of(Parent.B).on_entry(
+        entry(ChildB.B1)
+    ).on_activate(activate(ChildB.B1))
+    # No exit/deactivate needed for this test path
 
-    sm.configure(Parent.B)\
-        .on_entry(entry(Parent.B))\
-        .on_activate(activate(Parent.B))
-        # No exit/deactivate needed for this test path
+    sm.configure(Parent.B).on_entry(entry(Parent.B)).on_activate(activate(Parent.B))
+    # No exit/deactivate needed for this test path
 
     # Transition C -> A1 (enters A, then A1; activates A, then A1)
     await sm.fire_async(Trigger.GO_A1)

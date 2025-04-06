@@ -3,7 +3,12 @@ from enum import Enum, auto
 from typing import Any
 from collections.abc import Sequence
 
-from stateless import StateMachine, Transition, InvalidTransitionError, ConfigurationError
+from stateless import (
+    StateMachine,
+    Transition,
+    InvalidTransitionError,
+    ConfigurationError,
+)
 
 # --- Test Setup ---
 
@@ -31,14 +36,16 @@ def setup_function():
 
 # --- Action Signature Tests ---
 
+
 def test_action_signature_transition_only():
     def action(transition: Transition):
         actions_log.append(f"action_t_{transition.trigger}")
 
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).permit(Trigger.X, State.B).on_entry(action)
-    sm.fire(Trigger.X, 1, 2) # Pass args even if not accepted
+    sm.fire(Trigger.X, 1, 2)  # Pass args even if not accepted
     assert actions_log == ["action_t_Trigger.X"]
+
 
 def test_action_signature_transition_and_args_tuple():
     def action(transition: Transition, args: Sequence[Any]):
@@ -49,10 +56,12 @@ def test_action_signature_transition_and_args_tuple():
     sm.fire(Trigger.X, 1, "two")
     assert actions_log == ["action_t_args_(1, 'two')"]
 
+
 def test_action_signature_specific_args():
     # Already covered by test_parameters_passed_to_sync_action
     # and test_parameters_passed_to_async_action (action_v2)
     pass
+
 
 def test_action_signature_var_args():
     def action(*args):
@@ -60,7 +69,7 @@ def test_action_signature_var_args():
         # It passes the transition object and the tuple of trigger args.
         actions_log.append(f"action_varargs_{args}")
         assert isinstance(args[0], Transition)
-        assert args[1] == (1, 2, 3) # The trigger args tuple
+        assert args[1] == (1, 2, 3)  # The trigger args tuple
 
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).permit(Trigger.X, State.B).on_entry(action)
@@ -77,7 +86,7 @@ def test_action_signature_kwargs_not_supported():
     # named args like 'transition', 'args', or *args. A **kwargs only signature
     # will likely fail the mapping in _build_wrapper.
     def action(**kwargs):
-        actions_log.append(f"action_kwargs_{kwargs}") # pragma: no cover
+        actions_log.append(f"action_kwargs_{kwargs}")  # pragma: no cover
 
     sm = StateMachine[State, Trigger](State.A)
     # ConfigurationError should be raised when _build_wrapper fails to map args

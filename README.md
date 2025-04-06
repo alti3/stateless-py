@@ -292,6 +292,16 @@ print(f"State: {sm.state}") # State: ParentState.B
 # print(f"Is in Parent A? {sm.is_in_state(ParentState.A)}")
 ```
 
+## Thread Safety
+
+`stateless-py` includes basic internal locking to ensure that the sequence of actions during a single synchronous transition (e.g., exit actions, state mutation, entry actions) is atomic and to prevent simple synchronous reentrant calls to `fire()`.
+
+However, caution is advised when mixing synchronous and asynchronous operations on the same state machine instance, particularly when using `FiringMode.QUEUED`:
+- **Internal Lock**: A simple `threading.Lock` protects the critical section where the state is mutated and associated entry/exit actions are executed during a transition triggered by `fire()` or processed internally by `_internal_fire_async`. It also prevents direct reentrant calls to the synchronous `fire()` method.
+- **`QUEUED` Mode**: When using `FiringMode.QUEUED`, `fire_async` adds the trigger to an `asyncio.Queue`. A separate asynchronous task processes this queue. This task acquires the internal lock when executing the transition's actions.
+- **Mixing fire() and fire_async() (Queued)**: Calling the synchronous `fire()` while the asynchronous queue processor task is running (or about to run) can lead to contention for the internal lock. While the lock prevents simultaneous state mutation, complex interactions or deadlocks might arise depending on how synchronous calls are interleaved with the event loop's execution of queued tasks, especially if actions themselves block or yield control in unexpected ways.
+- **Recommendation**: If you need to call both synchronous `fire()` and asynchronous `fire_async()` (in `QUEUED` mode) on the same state machine instance from different threads or concurrent contexts, implement external synchronization around your calls to the state machine instance to ensure correct behaviour and prevent potential deadlocks or race conditions. The internal lock is primarily designed for the atomicity of individual transitions and basic synchronous reentrancy prevention, not for coordinating complex mixed synchronous/asynchronous workflows across different threads. Using `fire_async` exclusively (either in `IMMEDIATE` or `QUEUED` mode) within a single `asyncio` event loop generally avoids these specific cross-paradigm threading issues.
+
 ## Introspection and Visualization
 
 You can inspect the machine's configuration and generate diagrams.

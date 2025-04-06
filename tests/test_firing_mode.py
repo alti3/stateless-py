@@ -141,7 +141,7 @@ async def test_queued_action_exception_logged_and_continues(caplog):
     async def faulty_entry_b(t):
         actions_log.append("entry_b_start")
         raise ValueError("Action failed!")
-        actions_log.append("entry_b_end") # pragma: no cover
+        actions_log.append("entry_b_end")  # pragma: no cover
 
     def entry_c(t):
         nonlocal processed_y
@@ -153,7 +153,9 @@ async def test_queued_action_exception_logged_and_continues(caplog):
         processed_z = True
         actions_log.append("entry_a_from_z")
 
-    sm.configure(State.A).permit(Trigger.X, State.B).permit(Trigger.Z, State.A).on_entry(entry_a_from_z)
+    sm.configure(State.A).permit(Trigger.X, State.B).permit(
+        Trigger.Z, State.A
+    ).on_entry(entry_a_from_z)
     sm.configure(State.B).on_entry(faulty_entry_b).permit(Trigger.Y, State.C)
     sm.configure(State.C).on_entry(entry_c)
 

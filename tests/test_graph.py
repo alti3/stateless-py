@@ -44,11 +44,9 @@ def test_generate_dot_graph_simple():
 def test_generate_dot_graph_features():
     """Tests DOT graph includes guards, internal, ignored, dynamic."""
     sm = StateMachine[State, Trigger](State.A)
-    sm.configure(State.A)\
-        .permit_if(Trigger.X, State.B, lambda: True, "GuardX")\
-        .ignore(Trigger.Y)\
-        .internal_transition(Trigger.Z, lambda: None)\
-        .dynamic(Trigger.R, lambda: State.C)
+    sm.configure(State.A).permit_if(Trigger.X, State.B, lambda: True, "GuardX").ignore(
+        Trigger.Y
+    ).internal_transition(Trigger.Z, lambda: None).dynamic(Trigger.R, lambda: State.C)
     sm.configure(State.B)
     sm.configure(State.C)
 
@@ -111,11 +109,9 @@ def test_generate_mermaid_graph_simple():
 def test_generate_mermaid_graph_features():
     """Tests Mermaid graph includes guards, internal, ignored, dynamic."""
     sm = StateMachine[State, Trigger](State.A)
-    sm.configure(State.A)\
-        .permit_if(Trigger.X, State.B, lambda: True, "GuardX")\
-        .ignore(Trigger.Y)\
-        .internal_transition(Trigger.Z, lambda: None)\
-        .dynamic(Trigger.R, lambda: State.C)
+    sm.configure(State.A).permit_if(Trigger.X, State.B, lambda: True, "GuardX").ignore(
+        Trigger.Y
+    ).internal_transition(Trigger.Z, lambda: None).dynamic(Trigger.R, lambda: State.C)
     sm.configure(State.B)
     sm.configure(State.C)
 

@@ -1,9 +1,5 @@
 import inspect
-from typing import (
-    Any,
-    Generic,
-    cast
-)
+from typing import Any, Generic, cast
 from abc import ABC, abstractmethod
 from collections.abc import Sequence, Callable, Awaitable
 
