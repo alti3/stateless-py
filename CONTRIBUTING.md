@@ -12,26 +12,26 @@ This project and everyone participating in it is governed by a [Code of Conduct]
 
 ### Reporting Bugs
 
-*   **Ensure the bug was not already reported** by searching on GitHub under [Issues](https://github.com/your_username/pystatelite/issues). <!-- Placeholder: Update username/repo -->
-*   If you're unable to find an open issue addressing the problem, [open a new one](https://github.com/your_username/pystatelite/issues/new). Be sure to include a **title and clear description**, as much relevant information as possible, and a **code sample** or an **executable test case** demonstrating the expected behavior that is not occurring.
+*   **Ensure the bug was not already reported** by searching on GitHub under [Issues](https://github.com/alti3/stateless-py/issues).
+*   If you're unable to find an open issue addressing the problem, [open a new one](https://github.com/alti3/stateless-py/issues/new). Be sure to include a **title and clear description**, as much relevant information as possible, and a **code sample** or an **executable test case** demonstrating the expected behavior that is not occurring.
 
 ### Suggesting Enhancements
 
-*   Open a new issue on GitHub under [Issues](https://github.com/your_username/pystatelite/issues). <!-- Placeholder: Update username/repo -->
+*   Open a new issue on GitHub under [Issues](https://github.com/alti3/stateless-py/issues).
 *   Clearly describe the enhancement and the motivation for it. Explain why this enhancement would be useful.
 *   Provide code examples if possible to illustrate the use case.
 
 ### Pull Requests
 
 1.  **Fork the repository** on GitHub.
-2.  **Clone your fork** locally (`git clone git@github.com:your_username/pystatelite.git`). <!-- Placeholder: Update username/repo -->
+2.  **Clone your fork** locally (`git clone git@github.com:alti3/stateless-py.git`).
 3.  **Create a new branch** for your changes (`git checkout -b feature/my-new-feature` or `bugfix/fix-that-bug`).
 4.  **Make your changes**. Ensure you adhere to the existing code style.
 5.  **Add tests** for your changes. This is important so we don't break it in a future version unintentionally.
 6.  **Run tests** locally (`pytest`) to ensure everything passes.
 7.  **Commit your changes**. Use clear and descriptive commit messages. Consider using [Conventional Commits](https://www.conventionalcommits.org/).
 8.  **Push your branch** to your fork (`git push origin feature/my-new-feature`).
-9.  **Open a Pull Request** on the `pystatelite` repository. <!-- Placeholder: Update username/repo -->
+9.  **Open a Pull Request** on the `stateless-py` repository.
 10. Clearly describe the problem and solution. Include the relevant issue number if applicable.
 
 ## Development Setup
