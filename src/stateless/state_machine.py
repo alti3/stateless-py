@@ -46,6 +46,11 @@ from .trigger_behaviour import (
 )
 
 
+# Type alias for transition callbacks
+TransitionCallbackSync = Callable[[Transition[StateT, TriggerT]], None]
+TransitionCallbackAsync = Callable[[Transition[StateT, TriggerT]], Awaitable[None]]
+
+
 # Placeholder implementation
 class StateMachine(Generic[StateT, TriggerT]):
     """
@@ -58,6 +63,16 @@ class StateMachine(Generic[StateT, TriggerT]):
         state_accessor: Callable[[], StateT] | None = None,
         state_mutator: Callable[[StateT], None] | None = None,
         firing_mode: FiringMode = FiringMode.IMMEDIATE,
+        on_transitioned_callback: TransitionCallbackSync[StateT, TriggerT]
+        | None = None,
+        on_transitioned_async_callback: TransitionCallbackAsync[StateT, TriggerT]
+        | None = None,
+        on_transition_completed_callback: TransitionCallbackSync[StateT, TriggerT]
+        | None = None,
+        on_transition_completed_async_callback: TransitionCallbackAsync[
+            StateT, TriggerT
+        ]
+        | None = None,
     ):
         self._initial_state = initial_state
         self._state_accessor = state_accessor
@@ -70,6 +85,12 @@ class StateMachine(Generic[StateT, TriggerT]):
         self._unmet_trigger_handler_async: UnmetTriggerHandlerAsync[
             StateT, TriggerT
         ] = None
+        self._on_transitioned_callback = on_transitioned_callback
+        self._on_transitioned_async_callback = on_transitioned_async_callback
+        self._on_transition_completed_callback = on_transition_completed_callback
+        self._on_transition_completed_async_callback = (
+            on_transition_completed_async_callback
+        )
         self._state_type: Type | None = None
         self._trigger_type: Type | None = None
         self._lock = (
@@ -369,7 +390,7 @@ class StateMachine(Generic[StateT, TriggerT]):
 
         # --- Guards passed, determine transition ---
 
-        # Handle ignored triggers first
+        # Handle ignored triggers *before* creating transition or calling callbacks
         if isinstance(handler, IgnoredTriggerBehaviour):
             return  # Do nothing further
 
@@ -399,22 +420,76 @@ class StateMachine(Generic[StateT, TriggerT]):
                 f"Dynamic destination function for trigger '{trigger!r}' returned None."
             )
 
-        # --- Execute Transition ---
-        transition = Transition(current_state, destination, trigger, args)
+        # --- Create Transition Object ---
+        # Cast needed because destination could technically still be None if logic above changes
+        transition = Transition(
+            current_state, cast(StateT, destination), trigger, args
+        )
 
-        # Get representation for destination
-        dest_representation = self._get_representation(destination)
+        # Get representation for destination (needed for later checks and entry/exit)
+        # Cast safe because destination cannot be None here for non-internal transitions
+        dest_representation = self._get_representation(cast(StateT, destination))
 
+        # --- Call on_transitioned callbacks (before lock) ---
+        if self._on_transitioned_async_callback:
+            if sync_mode:
+                raise TypeError(
+                    f"Cannot execute async on_transitioned_async_callback for trigger '{trigger!r}' in sync mode."
+                )
+            await self._on_transitioned_async_callback(transition)
+
+        if self._on_transitioned_callback:
+            # Check if the callback itself is async - prevent calling it in sync mode
+            if sync_mode and inspect.iscoroutinefunction(
+                self._on_transitioned_callback
+            ):
+                raise TypeError(
+                    f"Cannot execute async on_transitioned_callback for trigger '{trigger!r}' in sync mode."
+                )
+            # Execute (await if needed and not in sync_mode)
+            result = self._on_transitioned_callback(transition)
+            if inspect.isawaitable(result):
+                if sync_mode:
+                    # This case should be caught above, but double-check
+                    raise TypeError(
+                        f"on_transitioned_callback for trigger '{trigger!r}' returned awaitable in sync mode."
+                    )
+                await result
+
+        # --- Execute Transition Actions within Lock ---
         with self._lock:  # Protect state mutation and action execution sequence
             if is_internal:
                 # Execute internal action only
                 internal_handler = cast(InternalTriggerBehaviour, handler)
-                # Check action async in sync mode
+                # Check action async in sync mode (already done above, but safer?)
                 if sync_mode and internal_handler.action_info.is_async:
                     raise TypeError(
                         f"Cannot fire trigger '{trigger!r}' synchronously: Internal action '{internal_handler.action_info.description}' is async."
                     )
                 await internal_handler.execute_internal_action(transition, args)
+
+                # --- Call on_transition_completed callbacks (after internal action) ---
+                if self._on_transition_completed_async_callback:
+                    if sync_mode:
+                        raise TypeError(
+                            f"Cannot execute async on_transition_completed_async_callback for trigger '{trigger!r}' in sync mode."
+                        )
+                    await self._on_transition_completed_async_callback(transition)
+
+                if self._on_transition_completed_callback:
+                    if sync_mode and inspect.iscoroutinefunction(
+                        self._on_transition_completed_callback
+                    ):
+                        raise TypeError(
+                            f"Cannot execute async on_transition_completed_callback for trigger '{trigger!r}' in sync mode."
+                        )
+                    result = self._on_transition_completed_callback(transition)
+                    if inspect.isawaitable(result):
+                        if sync_mode:
+                            raise TypeError(
+                                f"on_transition_completed_callback for trigger '{trigger!r}' returned awaitable in sync mode."
+                            )
+                        await result
             else:
                 # --- Standard Transition (including Reentry) ---
                 exit_actions = self._get_exit_actions(transition)
@@ -465,7 +540,8 @@ class StateMachine(Generic[StateT, TriggerT]):
 
                 # Update state
                 if self._state_mutator:
-                    self._state_mutator(destination)
+                    # Destination is guaranteed to be set here for non-internal
+                    self._state_mutator(cast(StateT, destination))
                 else:
                     # Should not happen if using internal state
                     raise RuntimeError("State mutator not configured.")
@@ -473,6 +549,29 @@ class StateMachine(Generic[StateT, TriggerT]):
                 # Execute entry actions (common ancestor down to substate)
                 for action_func in entry_actions:
                     await action_func()
+
+                # --- Call on_transition_completed callbacks (after entry actions) ---
+                if self._on_transition_completed_async_callback:
+                    if sync_mode:
+                        raise TypeError(
+                            f"Cannot execute async on_transition_completed_async_callback for trigger '{trigger!r}' in sync mode."
+                        )
+                    await self._on_transition_completed_async_callback(transition)
+
+                if self._on_transition_completed_callback:
+                    if sync_mode and inspect.iscoroutinefunction(
+                        self._on_transition_completed_callback
+                    ):
+                        raise TypeError(
+                            f"Cannot execute async on_transition_completed_callback for trigger '{trigger!r}' in sync mode."
+                        )
+                    result = self._on_transition_completed_callback(transition)
+                    if inspect.isawaitable(result):
+                        if sync_mode:
+                            raise TypeError(
+                                f"on_transition_completed_callback for trigger '{trigger!r}' returned awaitable in sync mode."
+                            )
+                        await result
 
     async def _handle_unmet_trigger(
         self, state: StateT, trigger: TriggerT, args: Args, sync_mode: bool
