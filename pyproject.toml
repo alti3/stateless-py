@@ -10,7 +10,7 @@ description = "A simple library for creating state machines in Python code"
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [
-    { name = "Your Name", email = "your.email@example.com" }, # TODO: Replace with your details
+    { name = "Altaher Emhemed", email = "taherassaid@gmail.com" },
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -46,8 +46,8 @@ graphing = [
 
 
 [project.urls]
-Homepage = "https://github.com/yourusername/stateless-py" # TODO: Replace with your repo URL
-Repository = "https://github.com/yourusername/stateless-py" # TODO: Replace with your repo URL
+Homepage = "https://github.com/alti3/stateless-py"
+Repository = "https://github.com/alti3/stateless-py"
 
 [tool.hatch.version]
 path = "src/stateless/__init__.py"

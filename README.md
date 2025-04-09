@@ -1,7 +1,7 @@
 # Stateless-py
 
 [![CI](https://github.com/alti3/stateless-py/actions/workflows/python-ci.yml/badge.svg)](https://github.com/alti3/stateless-py/actions/workflows/python-ci.yml)
-[![PyPI version](https://badge.fury.io/py/stateless-py.svg)](https://badge.fury.io/py/stateless-py) <!-- TODO: Update when published -->
+[![PyPI version](https://badge.fury.io/py/stateless-py.svg)](https://badge.fury.io/py/stateless-py)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 `stateless-py` is a versatile and straightforward library for creating state machines in Python, heavily inspired by the popular [Stateless](https://github.com/dotnet-state-machine/stateless) library for C#. It allows you to define states and triggers, configure transitions with guards and actions, manage state hierarchies (substates), and introspect the machine's structure.
@@ -87,7 +87,7 @@ uv add stateless-py
 
 ```bash
 # Clone the repository
-git clone https://github.com/alti3/stateless-py.git # TODO: Replace with your repo URL
+git clone https://github.com/alti3/stateless-py.git
 cd stateless-py
 
 # Install in editable mode with development dependencies
