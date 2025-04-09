@@ -4,10 +4,6 @@ First off, thank you for considering contributing to `pystatelite`! Your help is
 
 Following these guidelines helps to communicate that you respect the time of the developers managing and developing this open-source project. In return, they should reciprocate that respect in addressing your issue, assessing changes, and helping you finalize your pull requests.
 
-## Code of Conduct
-
-This project and everyone participating in it is governed by a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior. (Note: You'll need to add a `CODE_OF_CONDUCT.md` file, perhaps based on the Contributor Covenant).
-
 ## How Can I Contribute?
 
 ### Reporting Bugs
@@ -28,7 +24,7 @@ This project and everyone participating in it is governed by a [Code of Conduct]
 3.  **Create a new branch** for your changes (`git checkout -b feature/my-new-feature` or `bugfix/fix-that-bug`).
 4.  **Make your changes**. Ensure you adhere to the existing code style.
 5.  **Add tests** for your changes. This is important so we don't break it in a future version unintentionally.
-6.  **Run tests** locally (`pytest`) to ensure everything passes.
+6.  **Run tests** locally (`uxv pytest`) to ensure everything passes.
 7.  **Commit your changes**. Use clear and descriptive commit messages. Consider using [Conventional Commits](https://www.conventionalcommits.org/).
 8.  **Push your branch** to your fork (`git push origin feature/my-new-feature`).
 9.  **Open a Pull Request** on the `stateless-py` repository.
@@ -40,9 +36,9 @@ This project and everyone participating in it is governed by a [Code of Conduct]
 2.  It's recommended to use a virtual environment.
 3.  Install the package in editable mode with test dependencies:
     ```bash
-    pip install -e .[test] # Or install pytest/pytest-asyncio separately
+    uv pip install -e .[test] # Or install pytest/pytest-asyncio separately
     ```
-4.  Run tests using `pytest`.
+4.  Run tests using `uvx pytest`.
 
 ## Coding Style
 

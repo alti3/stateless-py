@@ -5,7 +5,7 @@ Stateless-py: A simple library for creating state machines in Python code.
 __version__ = "0.1.0"
 
 from .state_machine import StateMachine
-from .state_configuration import StateConfiguration  # Assuming this will exist
+from .state_configuration import StateConfiguration
 from .transition import Transition, StateT, TriggerT
 from .exceptions import StatelessError, InvalidTransitionError, ConfigurationError
 from .firing_modes import FiringMode
