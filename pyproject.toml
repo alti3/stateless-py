@@ -1,7 +1,7 @@
 # stateless-py/pyproject.toml
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build"]
+build-backend = "uv_build"
 
 [project]
 name = "stateless-py"
@@ -13,7 +13,7 @@ authors = [
     { name = "Altaher Emhemed", email = "taherassaid@gmail.com" },
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
@@ -80,10 +80,14 @@ line-ending = "auto"
 python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
-ignore_missing_imports = true # Start lenient
-# disallow_untyped_defs = true # Enable later for stricter typing
-# check_untyped_defs = true # Enable later for stricter typing
-# strict = True # Consider enabling for full strictness later
+ignore_missing_imports = false
+disallow_untyped_defs = true # Enforce type hints on all function definitions
+# check_untyped_defs = true # Less relevant if disallow_untyped_defs is True
+# Consider enabling stricter checks below later:
+# disallow_untyped_calls = true
+# warn_redundant_casts = true
+# warn_unused_ignores = true
+# strict = True # Enable for full strictness when ready
 show_error_codes = true
 pretty = true
 # Specify paths for mypy to check
