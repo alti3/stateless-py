@@ -422,9 +422,7 @@ class StateMachine(Generic[StateT, TriggerT]):
 
         # --- Create Transition Object ---
         # Cast needed because destination could technically still be None if logic above changes
-        transition = Transition(
-            current_state, cast(StateT, destination), trigger, args
-        )
+        transition = Transition(current_state, cast(StateT, destination), trigger, args)
 
         # Get representation for destination (needed for later checks and entry/exit)
         # Cast safe because destination cannot be None here for non-internal transitions
