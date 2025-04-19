@@ -568,15 +568,15 @@ async def test_async_transition_completed_queued_mode() -> None:
     transition_info: list[Transition] = []
     loop = asyncio.get_running_loop()
 
-    async def on_exit_a(t):
+    async def on_exit_a(t: Transition[TestState, TestTrigger]) -> None:
         await asyncio.sleep(0.01)
         execution_order.append("exit_a")
 
-    async def on_entry_b(t):
+    async def on_entry_b(t: Transition[TestState, TestTrigger]) -> None:
         await asyncio.sleep(0.01)
         execution_order.append("entry_b")
 
-    async def on_completed_async(t):
+    async def on_completed_async(t: Transition[TestState, TestTrigger]) -> None:
         await asyncio.sleep(0.01)
         execution_order.append("completed_async")
         transition_info.append(t)

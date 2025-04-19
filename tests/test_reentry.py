@@ -1,7 +1,8 @@
+from collections.abc import Callable
 import pytest
 from enum import Enum, auto
 
-from stateless import StateMachine, InvalidTransitionError
+from stateless import StateMachine, InvalidTransitionError, Transition
 
 # --- Test Setup ---
 
@@ -19,23 +20,23 @@ class Trigger(Enum):
 actions_log: list[str] = []
 
 
-def setup_function():
+def setup_function() -> None:
     actions_log.clear()
 
 
-def entry(s):
+def entry(s: State) -> Callable[[Transition[State, Trigger]], None]:
     return lambda t: actions_log.append(f"entry_{s.name}")
 
 
-def exit_(s):
+def exit_(s: State) -> Callable[[Transition[State, Trigger]], None]:
     return lambda t: actions_log.append(f"exit_{s.name}")
 
 
-def activate(s):
+def activate(s: State) -> Callable[[Transition[State, Trigger]], None]:
     return lambda t: actions_log.append(f"activate_{s.name}")
 
 
-def deactivate(s):
+def deactivate(s: State) -> Callable[[Transition[State, Trigger]], None]:
     return lambda t: actions_log.append(f"deactivate_{s.name}")
 
 
@@ -43,7 +44,7 @@ def deactivate(s):
 
 
 @pytest.mark.asyncio
-async def test_permit_reentry_executes_exit_entry():
+async def test_permit_reentry_executes_exit_entry() -> None:
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).on_entry(entry(State.A)).on_exit(
         exit_(State.A)
@@ -56,7 +57,7 @@ async def test_permit_reentry_executes_exit_entry():
 
 
 @pytest.mark.asyncio
-async def test_permit_reentry_executes_deactivate_activate():
+async def test_permit_reentry_executes_deactivate_activate() -> None:
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).on_activate(activate(State.A)).on_deactivate(
         deactivate(State.A)
@@ -72,10 +73,10 @@ async def test_permit_reentry_executes_deactivate_activate():
 
 
 @pytest.mark.asyncio
-async def test_permit_reentry_if_guard_met():
+async def test_permit_reentry_if_guard_met() -> None:
     can_reenter = True
 
-    def guard():
+    def guard() -> bool:
         return can_reenter
 
     sm = StateMachine[State, Trigger](State.A)
@@ -89,10 +90,10 @@ async def test_permit_reentry_if_guard_met():
 
 
 @pytest.mark.asyncio
-async def test_permit_reentry_if_guard_not_met():
+async def test_permit_reentry_if_guard_not_met() -> None:
     can_reenter = False
 
-    def guard():
+    def guard() -> bool:
         return can_reenter
 
     sm = StateMachine[State, Trigger](State.A)
@@ -111,7 +112,7 @@ async def test_permit_reentry_if_guard_not_met():
 
 
 @pytest.mark.asyncio
-async def test_reentry_does_not_affect_other_transitions():
+async def test_reentry_does_not_affect_other_transitions() -> None:
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).on_exit(exit_(State.A)).on_entry(
         entry(State.A)

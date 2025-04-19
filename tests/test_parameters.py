@@ -28,7 +28,7 @@ guard_log: list[Any] = []
 selector_log: list[Any] = []
 
 
-def setup_function():
+def setup_function() -> None:
     actions_log.clear()
     guard_log.clear()
     selector_log.clear()
@@ -85,7 +85,7 @@ def test_action_signature_kwargs_not_supported() -> None:
     # without explicit naming or a dict argument. The _build_wrapper expects
     # named args like 'transition', 'args', or *args. A **kwargs only signature
     # will likely fail the mapping in _build_wrapper.
-    def action(**kwargs):
+    def action(**kwargs: Any) -> None:
         actions_log.append(f"action_kwargs_{kwargs}")  # pragma: no cover
 
     sm = StateMachine[State, Trigger](State.A)
@@ -129,7 +129,7 @@ async def test_parameters_passed_to_async_action() -> None:
     # Let's redefine action to accept *args or specific types
     actions_log.clear()
 
-    async def action_v2(a: bool, b: float, c: None, transition: Transition):
+    async def action_v2(a: bool, b: float, c: None, transition: Transition[State, Trigger]):
         actions_log.append((a, b, c, transition.trigger))
 
     sm = StateMachine[State, Trigger](State.A)
@@ -170,7 +170,7 @@ async def test_parameters_passed_to_async_guard() -> None:
     assert sm.state == State.B
 
 
-def test_parameters_passed_to_sync_selector():
+def test_parameters_passed_to_sync_selector() -> None:
     def selector(target: str) -> State:
         selector_log.append(target)
         return State.B if target == "B" else State.A
