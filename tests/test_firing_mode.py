@@ -3,6 +3,7 @@ import asyncio
 from enum import Enum, auto
 
 from stateless import StateMachine, FiringMode
+from stateless.transition import Transition
 
 # --- Test Setup ---
 
@@ -22,7 +23,7 @@ class Trigger(Enum):
 actions_log: list[str] = []
 
 
-def setup_function():
+def setup_function() -> None:
     actions_log.clear()
 
 
@@ -32,7 +33,7 @@ def setup_function():
 
 
 @pytest.mark.asyncio
-async def test_queued_basic_sequence():
+async def test_queued_basic_sequence() -> None:
     sm = StateMachine[State, Trigger](State.A, firing_mode=FiringMode.QUEUED)
     sm.configure(State.A).permit(Trigger.X, State.B)
     sm.configure(State.B).permit(Trigger.Y, State.C)
@@ -49,10 +50,10 @@ async def test_queued_basic_sequence():
 
 
 @pytest.mark.asyncio
-async def test_queued_long_action_blocks_next():
+async def test_queued_long_action_blocks_next() -> None:
     sm = StateMachine[State, Trigger](State.A, firing_mode=FiringMode.QUEUED)
 
-    async def long_entry_b(t):
+    async def long_entry_b(t: Transition[State, Trigger]) -> None:
         actions_log.append("entry_b_start")
         await asyncio.sleep(0.1)
         actions_log.append("entry_b_end")
@@ -78,7 +79,7 @@ async def test_queued_long_action_blocks_next():
 
 
 @pytest.mark.asyncio
-async def test_queued_guard_failure_logged():
+async def test_queued_guard_failure_logged() -> None:
     # Note: Requires capturing print output or adding a specific error handler
     sm = StateMachine[State, Trigger](State.A, firing_mode=FiringMode.QUEUED)
     sm.configure(State.A).permit_if(Trigger.X, State.B, lambda: False, "GuardFail")
@@ -94,7 +95,7 @@ async def test_queued_guard_failure_logged():
 
 
 @pytest.mark.asyncio
-async def test_queued_unhandled_trigger_logged():
+async def test_queued_unhandled_trigger_logged() -> None:
     sm = StateMachine[State, Trigger](State.A, firing_mode=FiringMode.QUEUED)
     # No config for Trigger.X
 
@@ -108,7 +109,7 @@ async def test_queued_unhandled_trigger_logged():
 
 
 @pytest.mark.asyncio
-async def test_queued_fire_without_running_loop():
+async def test_queued_fire_without_running_loop() -> None:
     # This test is tricky as it depends on the environment setup
     # We simulate by trying to fire before starting the loop explicitly
     sm = StateMachine[State, Trigger](State.A, firing_mode=FiringMode.QUEUED)
@@ -117,7 +118,7 @@ async def test_queued_fire_without_running_loop():
     # Try firing before loop starts (should ideally raise or log error)
     with pytest.raises(RuntimeError):
         # Need to run this within an async context to even call fire_async
-        async def try_fire():
+        async def try_fire() -> None:
             await sm.fire_async(Trigger.X)
 
         await try_fire()  # This itself starts a loop via asyncio.run in pytest
@@ -132,23 +133,23 @@ async def test_queued_fire_without_running_loop():
 
 
 @pytest.mark.asyncio
-async def test_queued_action_exception_logged_and_continues(caplog):
+async def test_queued_action_exception_logged_and_continues(caplog: pytest.LogCaptureFixture) -> None:
     """Tests that an exception in a queued action is logged and queue continues."""
     sm = StateMachine[State, Trigger](State.A, firing_mode=FiringMode.QUEUED)
     processed_y = False
     processed_z = False
 
-    async def faulty_entry_b(t):
+    async def faulty_entry_b(t: Transition[State, Trigger]) -> None:
         actions_log.append("entry_b_start")
         raise ValueError("Action failed!")
         actions_log.append("entry_b_end")  # pragma: no cover
 
-    def entry_c(t):
+    def entry_c(t: Transition[State, Trigger]) -> None:
         nonlocal processed_y
         processed_y = True
         actions_log.append("entry_c")
 
-    def entry_a_from_z(t):
+    def entry_a_from_z(t: Transition[State, Trigger]) -> None:
         nonlocal processed_z
         processed_z = True
         actions_log.append("entry_a_from_z")

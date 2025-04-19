@@ -3,6 +3,7 @@ import asyncio
 from enum import Enum, auto
 
 from stateless import StateMachine, FiringMode
+from stateless.transition import Transition
 
 # --- Test Setup ---
 
@@ -22,7 +23,7 @@ class Trigger(Enum):
 actions_log: list[str] = []
 
 
-def setup_function():
+def setup_function() -> None:
     actions_log.clear()
 
 
@@ -30,15 +31,15 @@ def setup_function():
 
 
 @pytest.mark.asyncio
-async def test_async_guard_and_async_action():
+async def test_async_guard_and_async_action() -> None:
     """Tests transition with both async guard and async action."""
 
-    async def guard():
+    async def guard() -> bool:
         actions_log.append("guard_check")
         await asyncio.sleep(0.01)
         return True
 
-    async def entry_b(t):
+    async def entry_b(t: Transition[State, Trigger]) -> None:
         actions_log.append("entry_b_start")
         await asyncio.sleep(0.01)
         actions_log.append("entry_b_end")
@@ -53,19 +54,19 @@ async def test_async_guard_and_async_action():
 
 
 @pytest.mark.asyncio
-async def test_can_fire_async():
+async def test_can_fire_async() -> None:
     """Tests can_fire_async with sync and async guards."""
 
-    async def guard_async_true():
+    async def guard_async_true() -> bool:
         return True
 
-    async def guard_async_false():
+    async def guard_async_false() -> bool:
         return False
 
-    def guard_sync_true():
+    def guard_sync_true() -> bool:
         return True
 
-    def guard_sync_false():
+    def guard_sync_false() -> bool:
         return False
 
     sm = StateMachine[State, Trigger](State.A)
@@ -92,16 +93,16 @@ async def test_can_fire_async():
 
 
 @pytest.mark.asyncio
-async def test_get_permitted_triggers_async():
+async def test_get_permitted_triggers_async() -> None:
     """Tests get_permitted_triggers_async."""
 
-    async def guard_async_true():
+    async def guard_async_true() -> bool:
         return True
 
-    async def guard_async_false():
+    async def guard_async_false() -> bool:
         return False
 
-    def guard_sync_true():
+    def guard_sync_true() -> bool:
         return True
 
     sm = StateMachine[State, Trigger](State.A)
@@ -118,7 +119,7 @@ async def test_get_permitted_triggers_async():
 
 
 @pytest.mark.asyncio
-async def test_queued_firing_mode_immediate_sync_raises():
+async def test_queued_firing_mode_immediate_sync_raises() -> None:
     """Tests fire() raises error in QUEUED mode."""
     sm = StateMachine[State, Trigger](State.A, firing_mode=FiringMode.QUEUED)
     sm.configure(State.A).permit(Trigger.X, State.B)
@@ -131,16 +132,16 @@ async def test_queued_firing_mode_immediate_sync_raises():
 
 
 @pytest.mark.asyncio
-async def test_queued_firing_mode_processes_sequentially():
+async def test_queued_firing_mode_processes_sequentially() -> None:
     """Tests that queued triggers are processed in order."""
     sm = StateMachine[State, Trigger](State.A, firing_mode=FiringMode.QUEUED)
 
-    async def entry_b(t):
+    async def entry_b(t: Transition[State, Trigger]) -> None:
         actions_log.append("entry_b_start")
         await asyncio.sleep(0.05)  # Make it take time
         actions_log.append("entry_b_end")
 
-    async def entry_c(t):
+    async def entry_c(t: Transition[State, Trigger]) -> None:
         actions_log.append("entry_c_start")
         await asyncio.sleep(0.01)
         actions_log.append("entry_c_end")
@@ -173,12 +174,12 @@ async def test_queued_firing_mode_processes_sequentially():
 
 
 @pytest.mark.asyncio
-async def test_queued_firing_mode_guard_failure():
+async def test_queued_firing_mode_guard_failure() -> None:
     """Tests guard failure in queued mode."""
     sm = StateMachine[State, Trigger](State.A, firing_mode=FiringMode.QUEUED)
     can_y = False
 
-    def guard_y():
+    def guard_y() -> bool:
         return can_y
 
     sm.configure(State.A).permit(Trigger.X, State.B)

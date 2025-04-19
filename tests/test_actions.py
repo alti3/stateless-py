@@ -25,7 +25,7 @@ actions_log: list[str] = []
 # --- Sync Actions ---
 
 
-def setup_function():
+def setup_function() -> None:
     """Clear log before each test."""
     actions_log.clear()
 
@@ -284,7 +284,7 @@ async def test_async_action_with_args() -> None:
 def test_fire_sync_with_async_action_raises_type_error() -> None:
     """Tests that fire() raises TypeError if an async action is encountered."""
 
-    async def entry_b(t):
+    async def entry_b(t: Transition[State, Trigger]) -> None:
         pass
 
     sm = StateMachine[State, Trigger](State.A)
@@ -302,7 +302,7 @@ def test_fire_sync_with_async_action_raises_type_error() -> None:
 def test_fire_sync_with_async_exit_action_raises_type_error() -> None:
     """Tests that fire() raises TypeError if an async exit action is encountered."""
 
-    async def exit_a(t):
+    async def exit_a(t: Transition[State, Trigger]) -> None:
         pass
 
     sm = StateMachine[State, Trigger](State.A)

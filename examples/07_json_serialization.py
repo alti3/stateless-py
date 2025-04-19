@@ -33,7 +33,7 @@ class Member:
         # Always get state from the machine after initialization
         return self._state_machine.state
 
-    def _set_state(self, new_state: MembershipState):
+    def _set_state(self, new_state: MembershipState) -> None:
         print(f"Member '{self.name}': State changing from {self._state} to {new_state}")
         self._state = new_state
 

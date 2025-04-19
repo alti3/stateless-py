@@ -18,7 +18,7 @@ class Trigger(Enum):
 
 
 @pytest.mark.asyncio
-async def test_internal_transition_executes_action():
+async def test_internal_transition_executes_action() -> None:
     """Tests that an internal transition executes its action."""
     actions_executed: list[str] = []
 
@@ -37,11 +37,11 @@ async def test_internal_transition_executes_action():
 
 
 @pytest.mark.asyncio
-async def test_internal_transition_multiple_args():
+async def test_internal_transition_multiple_args() -> None:
     """Tests internal transition action receiving multiple arguments."""
     action_args = None
 
-    def internal_action(transition: Transition, args: Sequence[Any]):
+    def internal_action(transition: Transition[State, Trigger], args: Sequence[Any]):
         nonlocal action_args
         action_args = args
 
@@ -54,7 +54,7 @@ async def test_internal_transition_multiple_args():
 
 
 @pytest.mark.asyncio
-async def test_internal_transition_specific_args():
+async def test_internal_transition_specific_args() -> None:
     """Tests internal transition action receiving specific typed arguments."""
     action_args = None
 
@@ -71,17 +71,17 @@ async def test_internal_transition_specific_args():
 
 
 @pytest.mark.asyncio
-async def test_internal_transition_does_not_exit_enter():
+async def test_internal_transition_does_not_exit_enter() -> None:
     """Tests that internal transitions don't trigger exit/entry actions."""
     actions_executed: list[str] = []
 
-    def internal_action():
+    def internal_action() -> None:
         actions_executed.append("internal")
 
-    def entry_a(t):
+    def entry_a(t: Transition[State, Trigger]) -> None:
         actions_executed.append("entry_a")
 
-    def exit_a(t):
+    def exit_a(t: Transition[State, Trigger]) -> None:
         actions_executed.append("exit_a")
 
     sm = StateMachine[State, Trigger](State.A)
@@ -97,15 +97,15 @@ async def test_internal_transition_does_not_exit_enter():
 
 
 @pytest.mark.asyncio
-async def test_internal_transition_with_guards():
+async def test_internal_transition_with_guards() -> None:
     """Tests guards on internal transitions."""
     actions_executed: list[str] = []
     can_run = False
 
-    def internal_action():
+    def internal_action() -> None:
         actions_executed.append("internal")
 
-    def guard():
+    def guard() -> bool:
         return can_run
 
     sm = StateMachine[State, Trigger](State.A)
@@ -127,11 +127,11 @@ async def test_internal_transition_with_guards():
 
 
 @pytest.mark.asyncio
-async def test_internal_transition_async_action():
+async def test_internal_transition_async_action() -> None:
     """Tests an internal transition with an async action."""
     actions_executed: list[str] = []
 
-    async def internal_action_async():
+    async def internal_action_async() -> None:
         await asyncio.sleep(0.01)
         actions_executed.append("internal_async")
 
@@ -143,11 +143,11 @@ async def test_internal_transition_async_action():
     assert actions_executed == ["internal_async"]
 
 
-def test_fire_sync_with_async_internal_action_raises_type_error():
+def test_fire_sync_with_async_internal_action_raises_type_error() -> None:
     """Tests that fire() raises TypeError for async internal action."""
     actions_executed: list[str] = []
 
-    async def internal_action_async():
+    async def internal_action_async() -> None:
         actions_executed.append("internal_async")
 
     sm = StateMachine[State, Trigger](State.A)

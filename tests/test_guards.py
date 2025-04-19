@@ -18,11 +18,11 @@ class Trigger(Enum):
 # --- Sync Guards ---
 
 
-def test_permit_if_sync_guard_met():
+def test_permit_if_sync_guard_met() -> None:
     """Tests permit_if with a synchronous guard that passes."""
     guard_called = False
 
-    def guard():
+    def guard() -> bool:
         nonlocal guard_called
         guard_called = True
         return True
@@ -35,11 +35,11 @@ def test_permit_if_sync_guard_met():
     assert guard_called is True
 
 
-def test_permit_if_sync_guard_not_met():
+def test_permit_if_sync_guard_not_met() -> None:
     """Tests permit_if with a synchronous guard that fails."""
     guard_called = False
 
-    def guard():
+    def guard() -> bool:
         nonlocal guard_called
         guard_called = True
         return False
@@ -55,7 +55,7 @@ def test_permit_if_sync_guard_not_met():
     assert "Guard Description" in str(excinfo.value)
 
 
-def test_multiple_sync_guards_all_met():
+def test_multiple_sync_guards_all_met() -> None:
     """Tests multiple synchronous guards that all pass."""
     guards_called = [False, False]
 
@@ -77,7 +77,7 @@ def test_multiple_sync_guards_all_met():
     assert all(guards_called)
 
 
-def test_multiple_sync_guards_one_not_met():
+def test_multiple_sync_guards_one_not_met() -> None:
     """Tests multiple synchronous guards where one fails."""
     guards_called = [False, False]
 
@@ -102,11 +102,11 @@ def test_multiple_sync_guards_one_not_met():
     assert "G1" not in str(excinfo.value)  # Met guard description
 
 
-def test_sync_guard_with_args():
+def test_sync_guard_with_args() -> None:
     """Tests passing trigger arguments to a synchronous guard."""
     guard_args = None
 
-    def guard(a: int, b: str):
+    def guard(a: int, b: str) -> bool:
         nonlocal guard_args
         guard_args = (a, b)
         return a > 10 and b == "go"
@@ -130,11 +130,11 @@ def test_sync_guard_with_args():
 
 
 @pytest.mark.asyncio
-async def test_permit_if_async_guard_met():
+async def test_permit_if_async_guard_met() -> None:
     """Tests permit_if with an async guard that passes, using fire_async."""
     guard_called = False
 
-    async def guard():
+    async def guard() -> bool:
         nonlocal guard_called
         guard_called = True
         return True
@@ -150,11 +150,11 @@ async def test_permit_if_async_guard_met():
 
 
 @pytest.mark.asyncio
-async def test_permit_if_async_guard_not_met():
+async def test_permit_if_async_guard_not_met() -> None:
     """Tests permit_if with an async guard that fails, using fire_async."""
     guard_called = False
 
-    async def guard():
+    async def guard() -> bool:
         nonlocal guard_called
         guard_called = True
         return False
@@ -170,7 +170,7 @@ async def test_permit_if_async_guard_not_met():
 
 
 @pytest.mark.asyncio
-async def test_multiple_mixed_guards_met():
+async def test_multiple_mixed_guards_met() -> None:
     """Tests a mix of sync and async guards that all pass."""
     guards_called = [False, False]
 
@@ -193,7 +193,7 @@ async def test_multiple_mixed_guards_met():
 
 
 @pytest.mark.asyncio
-async def test_multiple_mixed_guards_async_fail():
+async def test_multiple_mixed_guards_async_fail() -> None:
     """Tests a mix of sync and async guards where the async one fails."""
     guards_called = [False, False]
 
@@ -218,11 +218,11 @@ async def test_multiple_mixed_guards_async_fail():
 
 
 @pytest.mark.asyncio
-async def test_async_guard_with_args():
+async def test_async_guard_with_args() -> None:
     """Tests passing trigger arguments to an async guard."""
     guard_args = None
 
-    async def guard(x: int):
+    async def guard(x: int) -> bool:
         nonlocal guard_args
         guard_args = x
         return x > 0
@@ -243,10 +243,10 @@ async def test_async_guard_with_args():
 # --- Sync/Async Mismatch ---
 
 
-def test_fire_sync_with_async_guard_raises_type_error():
+def test_fire_sync_with_async_guard_raises_type_error() -> None:
     """Tests that fire() raises TypeError if an async guard is encountered."""
 
-    async def guard():
+    async def guard() -> bool:
         return True
 
     sm = StateMachine[State, Trigger](State.A)
@@ -258,10 +258,10 @@ def test_fire_sync_with_async_guard_raises_type_error():
     assert "async functions" in str(excinfo.value)
 
 
-def test_can_fire_sync_with_async_guard_raises_type_error():
+def test_can_fire_sync_with_async_guard_raises_type_error() -> None:
     """Tests that can_fire() raises TypeError if an async guard is encountered."""
 
-    async def guard():
+    async def guard() -> bool:
         return True
 
     sm = StateMachine[State, Trigger](State.A)
@@ -273,13 +273,13 @@ def test_can_fire_sync_with_async_guard_raises_type_error():
     assert "async guards" in str(excinfo.value)
 
 
-def test_get_permitted_triggers_sync_skips_async_guards():
+def test_get_permitted_triggers_sync_skips_async_guards() -> None:
     """Tests that get_permitted_triggers() skips triggers with async guards."""
 
-    async def guard_async():
+    async def guard_async() -> bool:
         return True
 
-    def guard_sync():
+    def guard_sync() -> bool:
         return True
 
     sm = StateMachine[State, Trigger](State.A)

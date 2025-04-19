@@ -39,7 +39,7 @@ def check_media_loaded() -> bool:
 
 # --- Actions ---
 def log_action(message: str) -> Callable[[Transition | None, tuple], None]:
-    def action(transition_or_none: Transition | None = None, args: tuple = ()):
+    def action(transition_or_none: Transition | None = None, args: tuple = ()) -> None:
         details = f" (Args: {args})" if args else ""
         if transition_or_none:
             log.append(
@@ -97,7 +97,7 @@ player.configure(PlayerState.PAUSED).permit(Trigger.PLAY, PlayerState.PLAYING).p
 
 
 # --- Usage ---
-def print_log_and_state(message: str):
+def print_log_and_state(message: str) -> None:
     print(f"\n--- {message} ---")
     print(f"Current State: {player.state}")
     print("Log:")

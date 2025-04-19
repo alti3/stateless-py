@@ -22,17 +22,17 @@ class Trigger(Enum):
 actions_log: list[str] = []
 
 
-def setup_function():
+def setup_function() -> None:
     actions_log.clear()
 
 
 # --- Sync Selector ---
 
 
-def test_dynamic_sync_selector():
+def test_dynamic_sync_selector() -> None:
     target_state = State.C
 
-    def selector():
+    def selector() -> State:
         actions_log.append(f"selector_called_returns_{target_state.name}")
         return target_state
 
@@ -50,7 +50,7 @@ def test_dynamic_sync_selector():
     assert actions_log == ["selector_called_returns_D"]
 
 
-def test_dynamic_sync_selector_with_args():
+def test_dynamic_sync_selector_with_args() -> None:
     selector_args = None
 
     def selector(arg1: int, arg2: bool) -> State:
@@ -78,7 +78,7 @@ def test_dynamic_sync_selector_with_args():
 
 
 @pytest.mark.asyncio
-async def test_dynamic_async_selector():
+async def test_dynamic_async_selector() -> None:
     target_state = State.C
 
     async def selector():
@@ -94,7 +94,7 @@ async def test_dynamic_async_selector():
 
 
 @pytest.mark.asyncio
-async def test_dynamic_async_selector_with_args():
+async def test_dynamic_async_selector_with_args() -> None:
     selector_args = None
 
     async def selector(name: str) -> State:
@@ -118,15 +118,15 @@ async def test_dynamic_async_selector_with_args():
 
 
 @pytest.mark.asyncio
-async def test_dynamic_with_guard_met():
+async def test_dynamic_with_guard_met() -> None:
     guard_called = False
 
-    def guard():
+    def guard() -> bool:
         nonlocal guard_called
         guard_called = True
         return True
 
-    def selector():
+    def selector() -> State:
         return State.C
 
     sm = StateMachine[State, Trigger](State.A)
@@ -138,16 +138,16 @@ async def test_dynamic_with_guard_met():
 
 
 @pytest.mark.asyncio
-async def test_dynamic_with_guard_not_met():
+async def test_dynamic_with_guard_not_met() -> None:
     guard_called = False
     selector_called = False
 
-    def guard():
+    def guard() -> bool:
         nonlocal guard_called
         guard_called = True
         return False
 
-    def selector():
+    def selector() -> State:
         nonlocal selector_called
         selector_called = True
         return State.C
@@ -168,8 +168,8 @@ async def test_dynamic_with_guard_not_met():
 # --- Sync/Async Mismatch ---
 
 
-def test_fire_sync_with_async_selector_raises_type_error():
-    async def selector():
+def test_fire_sync_with_async_selector_raises_type_error() -> None:
+    async def selector() -> State:
         return State.C
 
     sm = StateMachine[State, Trigger](State.A)

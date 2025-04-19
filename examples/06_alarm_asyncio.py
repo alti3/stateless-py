@@ -82,7 +82,7 @@ class Alarm:
             )
             # raise InvalidOperationException(f"Cannot transition from {self.state} via {command}")
 
-    def _configure_machine(self):
+    def _configure_machine(self) -> None:
         self._machine.on_transitioned(self._log_transition)
 
         self._machine.configure(AlarmState.UNDEFINED).permit(

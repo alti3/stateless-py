@@ -1,7 +1,8 @@
+from collections.abc import Callable
 import pytest
 from enum import Enum, auto
 
-from stateless import StateMachine, InvalidTransitionError
+from stateless import StateMachine, InvalidTransitionError, Transition
 
 # --- Test Setup ---
 
@@ -20,15 +21,15 @@ class Trigger(Enum):
 actions_log: list[str] = []
 
 
-def setup_function():
+def setup_function() -> None:
     actions_log.clear()
 
 
-def entry(s):
+def entry(s: State) -> Callable[[Transition[State, Trigger]], None]:
     return lambda t: actions_log.append(f"entry_{s.name}")
 
 
-def exit_(s):
+def exit_(s: State) -> Callable[[Transition[State, Trigger]], None]:
     return lambda t: actions_log.append(f"exit_{s.name}")
 
 
@@ -36,7 +37,7 @@ def exit_(s):
 
 
 @pytest.mark.asyncio
-async def test_ignore_trigger():
+async def test_ignore_trigger() -> None:
     """Tests that an ignored trigger does nothing."""
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).on_exit(exit_(State.A)).ignore(Trigger.IGNORED).permit(
@@ -57,7 +58,7 @@ async def test_ignore_trigger():
 
 
 @pytest.mark.asyncio
-async def test_ignore_if_guard_met():
+async def test_ignore_if_guard_met() -> None:
     """Tests ignore_if when the guard passes."""
     should_ignore = True
 
@@ -75,11 +76,11 @@ async def test_ignore_if_guard_met():
 
 
 @pytest.mark.asyncio
-async def test_ignore_if_guard_not_met_falls_through():
+async def test_ignore_if_guard_not_met_falls_through() -> None:
     """Tests ignore_if when the guard fails, allowing other handlers."""
     should_ignore = False
 
-    def guard():
+    def guard() -> bool:
         return should_ignore
 
     sm = StateMachine[State, Trigger](State.A)
@@ -96,7 +97,7 @@ async def test_ignore_if_guard_not_met_unhandled():
     """Tests ignore_if when guard fails and no other handler exists."""
     should_ignore = False
 
-    def guard():
+    def guard() -> bool:
         return should_ignore
 
     sm = StateMachine[State, Trigger](State.A)

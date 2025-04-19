@@ -26,7 +26,7 @@ class Trigger(Enum):
 # --- Tests ---
 
 
-def test_generate_dot_graph_simple():
+def test_generate_dot_graph_simple() -> None:
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).permit(Trigger.X, State.B)
     sm.configure(State.B).permit(Trigger.Y, State.A)
@@ -41,7 +41,7 @@ def test_generate_dot_graph_simple():
     assert '"B" -> "A" [label="Y"]' in dot
 
 
-def test_generate_dot_graph_features():
+def test_generate_dot_graph_features() -> None:
     """Tests DOT graph includes guards, internal, ignored, dynamic."""
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).permit_if(Trigger.X, State.B, lambda: True, "GuardX").ignore(
@@ -66,7 +66,7 @@ def test_generate_dot_graph_features():
     assert '"A" -> "A" [label="R -> (<lambda>)", style=dashed]' in dot
 
 
-def test_generate_dot_graph_substates():
+def test_generate_dot_graph_substates() -> None:
     sm = StateMachine[Any, Trigger](SubA.A1)
     sm.configure(SubA.A1).substate_of(State.A).permit(Trigger.X, SubA.A2)
     sm.configure(SubA.A2).substate_of(State.A).permit(Trigger.Y, State.B)
@@ -93,7 +93,7 @@ def test_generate_dot_graph_substates():
     assert '"B" -> "A1" [label="R", lhead="cluster_A"]' in dot
 
 
-def test_generate_mermaid_graph_simple():
+def test_generate_mermaid_graph_simple() -> None:
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).permit(Trigger.X, State.B)
     sm.configure(State.B).permit(Trigger.Y, State.A)
@@ -106,7 +106,7 @@ def test_generate_mermaid_graph_simple():
     assert "B --> A : Y" in mermaid
 
 
-def test_generate_mermaid_graph_features():
+def test_generate_mermaid_graph_features() -> None:
     """Tests Mermaid graph includes guards, internal, ignored, dynamic."""
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).permit_if(Trigger.X, State.B, lambda: True, "GuardX").ignore(
@@ -131,7 +131,7 @@ def test_generate_mermaid_graph_features():
     assert "A --> A : R -> (<lambda>)" in mermaid
 
 
-def test_generate_mermaid_graph_substates():
+def test_generate_mermaid_graph_substates() -> None:
     sm = StateMachine[Any, Trigger](SubA.A1)
     sm.configure(SubA.A1).substate_of(State.A).permit(Trigger.X, SubA.A2)
     sm.configure(SubA.A2).substate_of(State.A).permit(Trigger.Y, State.B)
