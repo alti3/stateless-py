@@ -57,7 +57,7 @@ class Bug:
 
         return sm
 
-    def _set_state(self, new_state: State):
+    def _set_state(self, new_state: State) -> None:
         print(f"Bug '{self.title}': State changing from {self._state} to {new_state}")
         self._state = new_state
 
@@ -69,12 +69,12 @@ class Bug:
     def assignee(self) -> str | None:
         return self._assignee
 
-    def _set_assignee(self, assignee: str | None):
+    def _set_assignee(self, assignee: str | None) -> None:
         self._assignee = assignee
         print(f"Bug '{self.title}': Assignee set to {assignee or 'None'}")
 
     # Action for Assign trigger
-    def _assign(self, transition: Transition[State, Trigger], args: tuple[str]):
+    def _assign(self, transition: Transition[State, Trigger], args: tuple[str]) -> None:
         assignee = args[0] if args else None
         if assignee:
             self._set_assignee(assignee)
@@ -84,18 +84,18 @@ class Bug:
             self._set_assignee(None)
 
     # Public methods to fire triggers
-    def close(self):
+    def close(self) -> None:
         print(f"\nAttempting to Close '{self.title}'...")
         self.state_machine.fire(Trigger.CLOSE)
 
-    def assign(self, assignee: str):
+    def assign(self, assignee: str) -> None:
         print(f"\nAttempting to Assign '{self.title}' to {assignee}...")
         if not assignee:
             print("Cannot assign without an assignee name.")
             return
         self.state_machine.fire(Trigger.ASSIGN, assignee)
 
-    def defer(self):
+    def defer(self) -> None:
         print(f"\nAttempting to Defer '{self.title}'...")
         self.state_machine.fire(Trigger.DEFER)
 

@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from enum import Enum, auto
 
 from stateless import StateMachine, Transition
@@ -37,7 +38,7 @@ def check_media_loaded() -> bool:
 
 
 # --- Actions ---
-def log_action(message: str):
+def log_action(message: str) -> Callable[[Transition | None, tuple], None]:
     def action(transition_or_none: Transition | None = None, args: tuple = ()):
         details = f" (Args: {args})" if args else ""
         if transition_or_none:
@@ -51,11 +52,11 @@ def log_action(message: str):
     return action
 
 
-def activate_playing_scope():
+def activate_playing_scope() -> None:
     log.append("Activated: Playing Scope (e.g., acquire audio focus)")
 
 
-def deactivate_playing_scope():
+def deactivate_playing_scope() -> None:
     log.append("Deactivated: Playing Scope (e.g., release audio focus)")
 
 

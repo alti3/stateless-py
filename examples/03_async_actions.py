@@ -23,19 +23,19 @@ log: list[str] = []
 
 
 # --- Async Actions ---
-async def on_entry_executing(transition: Transition[State, Trigger]):
+async def on_entry_executing(transition: Transition[State, Trigger]) -> None:
     log.append(f"Entering {transition.destination}...")
     await asyncio.sleep(0.1)  # Simulate async work
     log.append(f"Async work in {transition.destination} complete.")
 
 
-async def on_exit_executing(transition: Transition[State, Trigger]):
+async def on_exit_executing(transition: Transition[State, Trigger]) -> None:
     log.append(f"Exiting {transition.source}...")
     await asyncio.sleep(0.05)  # Simulate async cleanup
     log.append(f"Async cleanup in {transition.source} complete.")
 
 
-async def on_entry_finished(transition: Transition[State, Trigger]):
+async def on_entry_finished(transition: Transition[State, Trigger]) -> None:
     log.append(f"Entering {transition.destination}. Process complete.")
 
 
@@ -53,7 +53,7 @@ async_machine.configure(State.FINISHED).on_entry_async(on_entry_finished)
 
 # --- Usage ---
 @pytest.mark.asyncio  # Use pytest-asyncio runner if running as test
-async def main():
+async def main() -> None:
     print("Initial State:", async_machine.state)
     log.append(f"Initial State: {async_machine.state}")
 

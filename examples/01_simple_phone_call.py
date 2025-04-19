@@ -59,7 +59,7 @@ phone_call.configure(State.ON_HOLD).permit(
 
 
 # --- Usage ---
-def print_state(sm: StateMachine):
+def print_state(sm: StateMachine[State, Trigger]) -> None:
     print(f"[{sm.state}]")
 
 

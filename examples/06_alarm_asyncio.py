@@ -63,7 +63,7 @@ class Alarm:
         # Automatically fire startup after configuration
         asyncio.create_task(self._machine.fire_async(AlarmCommand.STARTUP))
 
-    def _set_state(self, new_state: AlarmState):
+    def _set_state(self, new_state: AlarmState) -> None:
         logging.info(f"State changing from {self._state} to {new_state}")
         self._state = new_state
 
@@ -71,7 +71,7 @@ class Alarm:
     def state(self) -> AlarmState:
         return self._machine.state
 
-    async def fire(self, command: AlarmCommand):
+    async def fire(self, command: AlarmCommand) -> None:
         if self._machine.can_fire(command):  # Use sync can_fire for quick check
             logging.info(f"Firing command: {command}")
             # Use fire_async as timer actions are async
@@ -129,7 +129,7 @@ class Alarm:
             AlarmCommand.DISARM, AlarmState.DISARMED
         )
 
-    async def _timer_task(self, delay_sec: int, timer_name: str):
+    async def _timer_task(self, delay_sec: int, timer_name: str) -> None:
         try:
             await asyncio.sleep(delay_sec)
             logging.info(f"Timer '{timer_name}' finished, firing TIMEOUT.")
@@ -140,7 +140,7 @@ class Alarm:
         except Exception as e:
             logging.error(f"Error in timer '{timer_name}': {e}")
 
-    async def _start_timer(self, timer_name: str):
+    async def _start_timer(self, timer_name: str) -> None:
         await self._cancel_timer(timer_name)  # Ensure previous one is cancelled
         delay = self._delays.get(timer_name)
         if delay is not None and delay > 0:
@@ -153,7 +153,7 @@ class Alarm:
                 f"Timer '{timer_name}' has invalid delay {delay}, not starting."
             )
 
-    async def _cancel_timer(self, timer_name: str):
+    async def _cancel_timer(self, timer_name: str) -> None:
         task = self._timers.get(timer_name)
         if task and not task.done():
             logging.info(f"Cancelling timer '{timer_name}'.")
@@ -164,12 +164,12 @@ class Alarm:
                 pass  # Expected
         self._timers[timer_name] = None
 
-    def _log_transition(self, transition: Transition):
+    def _log_transition(self, transition: Transition[AlarmState, AlarmCommand]) -> None:
         logging.info(
             f"Transitioned: {transition.source} -> {transition.destination} via {transition.trigger}"
         )
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Cancel any running timers."""
         logging.info("Cleaning up alarm timers...")
         for name in list(self._timers.keys()):
@@ -178,7 +178,7 @@ class Alarm:
 
 
 # --- Usage Example ---
-async def run_alarm_scenario():
+async def run_alarm_scenario() -> None:
     print("\n--- Alarm Scenario ---")
     alarm = Alarm(
         arm_delay_sec=3, pause_delay_sec=4, trigger_delay_sec=2, trigger_timeout_sec=5

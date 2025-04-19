@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from enum import Enum, auto
 
 from stateless import StateMachine, Transition
@@ -21,15 +22,15 @@ log: list[str] = []
 
 
 # --- Actions ---
-def on_entry(state_name: str):
-    def action(t: Transition):
+def on_entry(state_name: str) -> Callable[[Transition], None]:
+    def action(t: Transition) -> None:
         log.append(f"Entered {state_name} from {t.trigger}")
 
     return action
 
 
-def on_exit(state_name: str):
-    def action(t: Transition):
+def on_exit(state_name: str) -> Callable[[Transition], None]:
+    def action(t: Transition) -> None:
         log.append(f"Exited {state_name} via {t.trigger}")
 
     return action
@@ -48,7 +49,7 @@ sm.configure(State.B).on_entry(on_entry("B")).on_exit(on_exit("B")).permit(
 
 
 # --- Usage ---
-def print_log_and_state(message: str):
+def print_log_and_state(message: str) -> None:
     print(f"\n--- {message} ---")
     print(f"Current State: {sm.state}")
     print("Log:")

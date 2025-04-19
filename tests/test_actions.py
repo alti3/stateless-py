@@ -30,39 +30,39 @@ def setup_function():
     actions_log.clear()
 
 
-def sync_entry_a(t: Transition):
+def sync_entry_a(t: Transition[State, Trigger]) -> None:
     actions_log.append(f"entry_A_from_{t.source}")
 
 
-def sync_exit_a(t: Transition):
+def sync_exit_a(t: Transition[State, Trigger]) -> None:
     actions_log.append(f"exit_A_to_{t.destination}")
 
 
-def sync_activate_a():
+def sync_activate_a() -> None:
     actions_log.append("activate_A")
 
 
-def sync_deactivate_a():
+def sync_deactivate_a() -> None:
     actions_log.append("deactivate_A")
 
 
-def sync_entry_b(t: Transition):
+def sync_entry_b(t: Transition[State, Trigger]) -> None:
     actions_log.append(f"entry_B_from_{t.source}")
 
 
-def sync_exit_b(t: Transition):
+def sync_exit_b(t: Transition[State, Trigger]) -> None:
     actions_log.append(f"exit_B_to_{t.destination}")
 
 
-def sync_activate_b():
+def sync_activate_b() -> None:
     actions_log.append("activate_B")
 
 
-def sync_deactivate_b():
+def sync_deactivate_b() -> None:
     actions_log.append("deactivate_B")
 
 
-def test_entry_exit_actions_sync():
+def test_entry_exit_actions_sync() -> None:
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).on_entry(sync_entry_a).on_exit(sync_exit_a).permit(
         Trigger.X, State.B
@@ -86,7 +86,7 @@ def test_entry_exit_actions_sync():
     assert actions_log == ["exit_B_to_State.A", "entry_A_from_State.B"]
 
 
-def test_activate_deactivate_actions_sync():
+def test_activate_deactivate_actions_sync() -> None:
     # Activate/Deactivate primarily for substates, but test basic calls
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).on_activate(sync_activate_a).on_deactivate(
@@ -117,13 +117,13 @@ def test_activate_deactivate_actions_sync():
     assert actions_log == ["deactivate_B", "entry_A_from_State.B", "activate_A"]
 
 
-def test_on_entry_from_sync():
+def test_on_entry_from_sync() -> None:
     """Tests actions executed only when entering from a specific trigger."""
 
-    def entry_b_generic(t):
+    def entry_b_generic(t: Transition[State, Trigger]) -> None:
         actions_log.append("entry_B_generic")
 
-    def entry_b_from_x(t):
+    def entry_b_from_x(t: Transition[State, Trigger]) -> None:
         actions_log.append("entry_B_from_X")
 
     sm = StateMachine[State, Trigger](State.A)
@@ -154,11 +154,11 @@ def test_on_entry_from_sync():
     assert actions_log == ["entry_B_generic"]  # Only generic action runs
 
 
-def test_sync_action_with_args():
+def test_sync_action_with_args() -> None:
     """Tests passing trigger arguments to sync actions."""
     entry_args = None
 
-    def entry_b_action(transition: Transition, args: Sequence[Any]):
+    def entry_b_action(transition: Transition[State, Trigger], args: Sequence[Any]) -> None:
         nonlocal entry_args
         entry_args = args
         actions_log.append(f"entry_B_args_{args}")
@@ -176,24 +176,24 @@ def test_sync_action_with_args():
 # --- Async Actions ---
 
 
-async def async_entry_a(t: Transition):
+async def async_entry_a(t: Transition[State, Trigger]) -> None:
     actions_log.append(f"async_entry_A_from_{t.source}")
 
 
-async def async_exit_a(t: Transition):
+async def async_exit_a(t: Transition[State, Trigger]) -> None:
     actions_log.append(f"async_exit_A_to_{t.destination}")
 
 
-async def async_activate_a():
+async def async_activate_a() -> None:
     actions_log.append("async_activate_A")
 
 
-async def async_deactivate_a():
+async def async_deactivate_a() -> None:
     actions_log.append("async_deactivate_A")
 
 
 @pytest.mark.asyncio
-async def test_entry_exit_actions_async():
+async def test_entry_exit_actions_async() -> None:
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).on_entry(async_entry_a).on_exit(async_exit_a).permit(
         Trigger.X, State.B
@@ -216,7 +216,7 @@ async def test_entry_exit_actions_async():
 
 
 @pytest.mark.asyncio
-async def test_activate_deactivate_actions_async():
+async def test_activate_deactivate_actions_async() -> None:
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).on_activate(async_activate_a).on_deactivate(
         async_deactivate_a
@@ -237,13 +237,13 @@ async def test_activate_deactivate_actions_async():
 
 
 @pytest.mark.asyncio
-async def test_on_entry_from_async():
+async def test_on_entry_from_async() -> None:
     """Tests async actions executed only when entering from a specific trigger."""
 
-    async def entry_b_generic(t):
+    async def entry_b_generic(t: Transition[State, Trigger]) -> None:
         actions_log.append("async_entry_B_generic")
 
-    async def entry_b_from_x(t):
+    async def entry_b_from_x(t: Transition[State, Trigger]) -> None:
         actions_log.append("async_entry_B_from_X")
 
     sm = StateMachine[State, Trigger](State.A)
@@ -259,11 +259,11 @@ async def test_on_entry_from_async():
 
 
 @pytest.mark.asyncio
-async def test_async_action_with_args():
+async def test_async_action_with_args() -> None:
     """Tests passing trigger arguments to async actions."""
     entry_args = None
 
-    async def entry_b_action(transition: Transition, args: Sequence[Any]):
+    async def entry_b_action(transition: Transition[State, Trigger], args: Sequence[Any]) -> None:
         nonlocal entry_args
         entry_args = args
         actions_log.append(f"async_entry_B_args_{args}")
@@ -281,7 +281,7 @@ async def test_async_action_with_args():
 # --- Sync/Async Mismatch ---
 
 
-def test_fire_sync_with_async_action_raises_type_error():
+def test_fire_sync_with_async_action_raises_type_error() -> None:
     """Tests that fire() raises TypeError if an async action is encountered."""
 
     async def entry_b(t):
@@ -299,7 +299,7 @@ def test_fire_sync_with_async_action_raises_type_error():
     )  # Activate might also be checked
 
 
-def test_fire_sync_with_async_exit_action_raises_type_error():
+def test_fire_sync_with_async_exit_action_raises_type_error() -> None:
     """Tests that fire() raises TypeError if an async exit action is encountered."""
 
     async def exit_a(t):

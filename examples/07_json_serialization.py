@@ -62,15 +62,15 @@ class Member:
         return sm
 
     # --- Public methods to fire triggers ---
-    def terminate(self):
+    def terminate(self) -> None:
         print(f"\nAttempting to Terminate '{self.name}'...")
         self._state_machine.fire(MemberTriggers.TERMINATE)
 
-    def suspend(self):
+    def suspend(self) -> None:
         print(f"\nAttempting to Suspend '{self.name}'...")
         self._state_machine.fire(MemberTriggers.SUSPEND)
 
-    def reactivate(self):
+    def reactivate(self) -> None:
         print(f"\nAttempting to Reactivate '{self.name}'...")
         self._state_machine.fire(MemberTriggers.REACTIVATE)
 
