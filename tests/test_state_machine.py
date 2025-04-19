@@ -21,13 +21,13 @@ class Trigger(Enum):
     Z = auto()  # Unconfigured trigger
 
 
-def test_initial_state():
+def test_initial_state() -> None:
     """Tests if the state machine initializes to the correct state."""
     sm = StateMachine[State, Trigger](State.A)
     assert sm.state == State.A
 
 
-def test_simple_transition():
+def test_simple_transition() -> None:
     """Tests a basic transition using permit."""
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).permit(Trigger.X, State.B)
@@ -41,7 +41,7 @@ def test_simple_transition():
 
 
 @pytest.mark.asyncio
-async def test_simple_transition_async():
+async def test_simple_transition_async() -> None:
     """Tests a basic transition using fire_async."""
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).permit(Trigger.X, State.B)
@@ -51,7 +51,7 @@ async def test_simple_transition_async():
     assert sm.state == State.B
 
 
-def test_unconfigured_trigger_raises_error():
+def test_unconfigured_trigger_raises_error() -> None:
     """Tests that firing an unconfigured trigger raises InvalidTransitionError."""
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).permit(Trigger.X, State.B)
@@ -64,7 +64,7 @@ def test_unconfigured_trigger_raises_error():
 
 
 @pytest.mark.asyncio
-async def test_unconfigured_trigger_raises_error_async():
+async def test_unconfigured_trigger_raises_error_async() -> None:
     """Tests unconfigured trigger with fire_async."""
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).permit(Trigger.X, State.B)
@@ -73,7 +73,7 @@ async def test_unconfigured_trigger_raises_error_async():
         await sm.fire_async(Trigger.Z)
 
 
-def test_trigger_configured_for_different_state_raises_error():
+def test_trigger_configured_for_different_state_raises_error() -> None:
     """Tests firing a trigger valid only in another state."""
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).permit(Trigger.X, State.B)
@@ -87,7 +87,7 @@ def test_trigger_configured_for_different_state_raises_error():
 # --- Unhandled Trigger Handler ---
 
 
-def test_unhandled_trigger_sync_handler():
+def test_unhandled_trigger_sync_handler() -> None:
     """Tests the synchronous unhandled trigger handler."""
     unhandled_log: list[str] = []
 
@@ -108,7 +108,7 @@ def test_unhandled_trigger_sync_handler():
 
 
 @pytest.mark.asyncio
-async def test_unhandled_trigger_async_handler():
+async def test_unhandled_trigger_async_handler() -> None:
     """Tests the asynchronous unhandled trigger handler."""
     unhandled_log: list[str] = []
 
@@ -129,7 +129,7 @@ async def test_unhandled_trigger_async_handler():
 
 
 @pytest.mark.asyncio
-async def test_unhandled_trigger_sync_handler_called_by_async():
+async def test_unhandled_trigger_sync_handler_called_by_async() -> None:
     """Tests calling a sync unhandled handler via fire_async."""
     unhandled_log: list[str] = []
 
@@ -145,7 +145,7 @@ async def test_unhandled_trigger_sync_handler_called_by_async():
     assert unhandled_log == ["Sync handler called"]
 
 
-def test_unhandled_trigger_async_handler_raises_sync():
+def test_unhandled_trigger_async_handler_raises_sync() -> None:
     """Tests that fire() raises TypeError if async unhandled handler exists."""
 
     async def handler(state, trigger, args):
@@ -162,7 +162,7 @@ def test_unhandled_trigger_async_handler_raises_sync():
 # --- State Accessor/Mutator ---
 
 
-def test_state_accessor_mutator():
+def test_state_accessor_mutator() -> None:
     """Tests using external state via accessor/mutator."""
     external_state = {"current": State.A}
 
@@ -190,7 +190,7 @@ def test_state_accessor_mutator():
     assert external_state["current"] == State.A
 
 
-def test_state_accessor_raises_exception():
+def test_state_accessor_raises_exception() -> None:
     """Tests when the state accessor raises an error."""
 
     def getter_error():
@@ -233,7 +233,7 @@ def test_state_accessor_raises_exception():
     # assert sm._current_state == State.A # Cannot access internal state directly
 
 
-def test_state_mutator_raises_exception():
+def test_state_mutator_raises_exception() -> None:
     """Tests when the state mutator raises an error."""
     external_state = {"current": State.A}
 
@@ -259,7 +259,7 @@ def test_state_mutator_raises_exception():
     assert sm.state == State.A
 
 
-def test_initial_state_vs_accessor_mismatch():
+def test_initial_state_vs_accessor_mismatch() -> None:
     """Tests behavior when constructor initial_state differs from accessor."""
     external_state = {"current": State.B}  # Accessor returns B
 
@@ -280,7 +280,7 @@ def test_initial_state_vs_accessor_mismatch():
 
 
 # --- Sync Reentrancy Check ---
-def test_sync_reentrant_fire_raises_error():
+def test_sync_reentrant_fire_raises_error() -> None:
     """Tests that immediate synchronous reentrant firing raises an error."""
     sm = StateMachine[State, Trigger](State.A)
 
@@ -299,19 +299,19 @@ def test_sync_reentrant_fire_raises_error():
 # --- can_fire / get_permitted_triggers (Sync) ---
 
 
-def test_can_fire_sync_success():
+def test_can_fire_sync_success() -> None:
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).permit(Trigger.X, State.B)
     assert sm.can_fire(Trigger.X) is True
 
 
-def test_can_fire_sync_fail_wrong_state():
+def test_can_fire_sync_fail_wrong_state() -> None:
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.B).permit(Trigger.X, State.C)
     assert sm.can_fire(Trigger.X) is False
 
 
-def test_can_fire_sync_fail_unconfigured():
+def test_can_fire_sync_fail_unconfigured() -> None:
     sm = StateMachine[State, Trigger](State.A)
     assert sm.can_fire(Trigger.X) is False
 
@@ -326,7 +326,7 @@ def test_get_permitted_triggers_sync():
     assert set(permitted) == {Trigger.X, Trigger.Y}
 
 
-def test_get_permitted_triggers_sync_empty():
+def test_get_permitted_triggers_sync_empty() -> None:
     sm = StateMachine[State, Trigger](State.A)
     # No transitions configured for A
     sm.configure(State.B).permit(Trigger.X, State.A)
@@ -348,13 +348,13 @@ def test_sync_transition_completed_callback() -> None:
     execution_order: list[str] = []
     transition_info: list[Transition] = []
 
-    def on_exit_a(t):
+    def on_exit_a(t: Transition[TestState, TestTrigger]) -> None:
         execution_order.append("exit_a")
 
-    def on_entry_b(t):
+    def on_entry_b(t: Transition[TestState, TestTrigger]) -> None:
         execution_order.append("entry_b")
 
-    def on_completed(t):
+    def on_completed(t: Transition[TestState, TestTrigger]) -> None:
         execution_order.append("completed")
         transition_info.append(t)
 
@@ -389,15 +389,15 @@ async def test_async_transition_completed_callback() -> None:
     execution_order: list[str] = []
     transition_info: list[Transition] = []
 
-    async def on_exit_a(t):
+    async def on_exit_a(t: Transition[TestState, TestTrigger]) -> None:
         await asyncio.sleep(0.01)
         execution_order.append("exit_a")
 
-    async def on_entry_b(t):
+    async def on_entry_b(t: Transition[TestState, TestTrigger]) -> None:
         await asyncio.sleep(0.01)
         execution_order.append("entry_b")
 
-    async def on_completed_async(t):
+    async def on_completed_async(t: Transition[TestState, TestTrigger]) -> None:
         await asyncio.sleep(0.01)
         execution_order.append("completed_async")
         transition_info.append(t)
@@ -436,17 +436,17 @@ async def test_both_transition_completed_callbacks_async_fire() -> None:
     transition_info_sync: list[Transition] = []
     transition_info_async: list[Transition] = []
 
-    async def on_exit_a(t):
+    async def on_exit_a(t: Transition[TestState, TestTrigger]) -> None:
         execution_order.append("exit_a")
 
-    async def on_entry_b(t):
+    async def on_entry_b(t: Transition[TestState, TestTrigger]) -> None:
         execution_order.append("entry_b")
 
-    def on_completed_sync(t):
+    def on_completed_sync(t: Transition[TestState, TestTrigger]) -> None:
         execution_order.append("completed_sync")
         transition_info_sync.append(t)
 
-    async def on_completed_async(t):
+    async def on_completed_async(t: Transition[TestState, TestTrigger]) -> None:
         execution_order.append("completed_async")
         transition_info_async.append(t)
 
@@ -487,10 +487,10 @@ def test_sync_transition_completed_internal_transition() -> None:
     execution_order: list[str] = []
     transition_info: list[Transition] = []
 
-    def internal_action(t):
+    def internal_action(t: Transition[TestState, TestTrigger]) -> None:
         execution_order.append("internal_action")
 
-    def on_completed(t):
+    def on_completed(t: Transition[TestState, TestTrigger]) -> None:
         execution_order.append("completed")
         transition_info.append(t)
 
@@ -523,13 +523,13 @@ async def test_async_transition_completed_reentry_transition() -> None:
     execution_order: list[str] = []
     transition_info: list[Transition] = []
 
-    async def on_exit_a(t):
+    async def on_exit_a(t: Transition[TestState, TestTrigger]) -> None:
         execution_order.append("exit_a")
 
-    async def on_entry_a(t):
+    async def on_entry_a(t: Transition[TestState, TestTrigger]) -> None:
         execution_order.append("entry_a")
 
-    async def on_completed_async(t):
+    async def on_completed_async(t: Transition[TestState, TestTrigger]) -> None:
         execution_order.append("completed_async")
         transition_info.append(t)
 
