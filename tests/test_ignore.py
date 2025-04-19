@@ -62,7 +62,7 @@ async def test_ignore_if_guard_met() -> None:
     """Tests ignore_if when the guard passes."""
     should_ignore = True
 
-    def guard():
+    def guard() -> bool:
         return should_ignore
 
     sm = StateMachine[State, Trigger](State.A)
@@ -93,7 +93,7 @@ async def test_ignore_if_guard_not_met_falls_through() -> None:
 
 
 @pytest.mark.asyncio
-async def test_ignore_if_guard_not_met_unhandled():
+async def test_ignore_if_guard_not_met_unhandled() -> None:
     """Tests ignore_if when guard fails and no other handler exists."""
     should_ignore = False
 

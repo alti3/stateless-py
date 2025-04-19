@@ -174,11 +174,11 @@ async def test_multiple_mixed_guards_met() -> None:
     """Tests a mix of sync and async guards that all pass."""
     guards_called = [False, False]
 
-    def guard1():
+    def guard1() -> bool:
         guards_called[0] = True
         return True
 
-    async def guard2():
+    async def guard2() -> bool:
         guards_called[1] = True
         return True
 
@@ -201,7 +201,7 @@ async def test_multiple_mixed_guards_async_fail() -> None:
         guards_called[0] = True
         return True
 
-    async def guard2():
+    async def guard2() -> bool:
         guards_called[1] = True
         return False  # Fails
 

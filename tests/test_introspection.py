@@ -6,6 +6,7 @@ from stateless.reflection import (
     StateMachineInfo,
     StateInfo,
 )
+from stateless.transition import Transition
 
 # --- Test Setup ---
 
@@ -30,30 +31,30 @@ class Trigger(Enum):
     INT = auto()
 
 
-def guard_always_true():
+def guard_always_true() -> bool:
     return True
 
 
-async def guard_async():
+async def guard_async() -> bool:
     return True
 
 
-def action_sync(t):
+def action_sync(t: Transition[State, Trigger]) -> None:
     pass
 
 
-async def action_async(t):
+async def action_async(t: Transition[State, Trigger]) -> None:
     pass
 
 
-def selector_sync():
+def selector_sync() -> State:
     return State.C
 
 
 # --- Tests ---
 
 
-def test_get_info_simple_machine():
+def test_get_info_simple_machine() -> None:
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).permit(Trigger.X, State.B)
     sm.configure(State.B).permit(Trigger.Y, State.A)
@@ -80,7 +81,7 @@ def test_get_info_simple_machine():
     assert state_b_info.fixed_transitions[0].destination_state == State.A
 
 
-def test_get_info_with_guards_actions():
+def test_get_info_with_guards_actions() -> None:
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).on_entry(action_sync, "Entry A").on_exit(
         action_async
@@ -105,7 +106,7 @@ def test_get_info_with_guards_actions():
     assert trans_x.guard_conditions[0].method_description.is_async is False
 
 
-def test_get_info_substates():
+def test_get_info_substates() -> None:
     sm = StateMachine[Any, Trigger](SubA.A1)
     sm.configure(SubA.A1).substate_of(State.A).permit(Trigger.X, SubA.A2)
     sm.configure(SubA.A2).substate_of(State.A).permit(Trigger.Y, State.B)
@@ -132,7 +133,7 @@ def test_get_info_substates():
     assert state_a1_info.fixed_transitions[0].destination_state == SubA.A2
 
 
-def test_get_info_ignore_internal_dynamic():
+def test_get_info_ignore_internal_dynamic() -> None:
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).ignore_if(
         Trigger.IG, guard_always_true, "IgnoreGuard"
@@ -166,7 +167,7 @@ def test_get_info_ignore_internal_dynamic():
     assert dynamic.guard_conditions == []
 
 
-def test_get_info_trigger_parameters():
+def test_get_info_trigger_parameters() -> None:
     sm = StateMachine[State, Trigger](State.A)
     sm.set_trigger_parameters(Trigger.X, int, str)
     sm.configure(State.A).permit(Trigger.X, State.B)
