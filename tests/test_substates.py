@@ -1,9 +1,11 @@
+from collections.abc import Callable
 import pytest
 from enum import Enum, auto
 from typing import Any
 
 from stateless import StateMachine
 from stateless.exceptions import ConfigurationError
+from stateless.transition import Transition
 # --- Test Setup ---
 
 
@@ -34,23 +36,23 @@ class Trigger(Enum):
 actions_log: list[str] = []
 
 
-def setup_function():
+def setup_function() -> None:
     actions_log.clear()
 
 
-def entry(state):
+def entry(state: Any) -> Callable[[Transition[Any, Trigger]], None]:
     return lambda t: actions_log.append(f"entry_{state.name}")
 
 
-def exit_(state):
+def exit_(state: Any) -> Callable[[Transition[Any, Trigger]], None]:
     return lambda t: actions_log.append(f"exit_{state.name}")
 
 
-def activate(state):
+def activate(state: Any) -> Callable[[Transition[Any, Trigger]], None]:
     return lambda t: actions_log.append(f"activate_{state.name}")
 
 
-def deactivate(state):
+def deactivate(state: Any) -> Callable[[Transition[Any, Trigger]], None]:
     return lambda t: actions_log.append(f"deactivate_{state.name}")
 
 
@@ -58,7 +60,7 @@ def deactivate(state):
 
 
 @pytest.mark.asyncio
-async def test_substate_definition_and_is_in_state():
+async def test_substate_definition_and_is_in_state() -> None:
     sm = StateMachine[Any, Trigger](ChildA.A1)  # Start in substate
     sm.configure(ChildA.A1).substate_of(Parent.A)
     sm.configure(ChildA.A2).substate_of(Parent.A)
@@ -73,7 +75,7 @@ async def test_substate_definition_and_is_in_state():
 
 
 @pytest.mark.asyncio
-async def test_transition_between_substates():
+async def test_transition_between_substates() -> None:
     sm = StateMachine[Any, Trigger](ChildA.A1)
     sm.configure(ChildA.A1).substate_of(Parent.A).permit(Trigger.GO_A2, ChildA.A2)
     sm.configure(ChildA.A2).substate_of(Parent.A).permit(Trigger.GO_A1, ChildA.A1)
@@ -89,7 +91,7 @@ async def test_transition_between_substates():
 
 
 @pytest.mark.asyncio
-async def test_transition_from_substate_to_different_parent():
+async def test_transition_from_substate_to_different_parent() -> None:
     sm = StateMachine[Any, Trigger](ChildA.A1)
     sm.configure(ChildA.A1).substate_of(Parent.A).permit(Trigger.GO_B1, ChildB.B1)
     sm.configure(ChildB.B1).substate_of(Parent.B)
@@ -106,7 +108,7 @@ async def test_transition_from_substate_to_different_parent():
 
 
 @pytest.mark.asyncio
-async def test_transition_from_substate_to_superstate():
+async def test_transition_from_substate_to_superstate() -> None:
     sm = StateMachine[Any, Trigger](ChildA.A1)
     sm.configure(ChildA.A1).substate_of(Parent.A).permit(
         Trigger.EXIT_A, Parent.B
@@ -120,7 +122,7 @@ async def test_transition_from_substate_to_superstate():
 
 
 @pytest.mark.asyncio
-async def test_transition_from_superstate_to_substate():
+async def test_transition_from_superstate_to_substate() -> None:
     sm = StateMachine[Any, Trigger](Parent.B)
     sm.configure(Parent.B).permit(Trigger.GO_A1, ChildA.A1)
     sm.configure(ChildA.A1).substate_of(Parent.A)
@@ -132,7 +134,7 @@ async def test_transition_from_superstate_to_substate():
 
 
 @pytest.mark.asyncio
-async def test_unhandled_trigger_in_substate_handled_by_superstate():
+async def test_unhandled_trigger_in_substate_handled_by_superstate() -> None:
     sm = StateMachine[Any, Trigger](ChildA.A1)
     sm.configure(ChildA.A1).substate_of(Parent.A)  # No triggers defined for A1
     sm.configure(Parent.A).permit(Trigger.GO_C, Parent.C)  # Parent handles GO_C
@@ -146,7 +148,7 @@ async def test_unhandled_trigger_in_substate_handled_by_superstate():
 
 
 @pytest.mark.asyncio
-async def test_substate_action_order_full():
+async def test_substate_action_order_full() -> None:
     """Tests entry/exit and activate/deactivate order during transitions."""
     sm = StateMachine[Any, Trigger](Parent.C)  # Start outside hierarchy
     sm.configure(Parent.C).permit(Trigger.GO_A1, ChildA.A1)
@@ -199,7 +201,7 @@ async def test_substate_action_order_full():
 
 
 @pytest.mark.asyncio
-async def test_substate_action_order_enter_exit():
+async def test_substate_action_order_enter_exit() -> None:
     # This test is now covered by test_substate_action_order_full
     # We can keep it if we want a simpler version focusing only on entry/exit
     # Or remove it. Let's keep it for now but note the overlap.
@@ -235,7 +237,7 @@ async def test_substate_action_order_enter_exit():
 
 
 @pytest.mark.asyncio
-async def test_initial_transition_to_substate():
+async def test_initial_transition_to_substate() -> None:
     sm = StateMachine[Any, Trigger](Parent.C)  # Start outside
     sm.configure(Parent.C).permit(Trigger.GO_A1, Parent.A)  # Target Parent A
 
@@ -250,7 +252,7 @@ async def test_initial_transition_to_substate():
 
 
 @pytest.mark.asyncio
-async def test_initial_transition_to_nested_substate():
+async def test_initial_transition_to_nested_substate() -> None:
     class GrandChildA1(Enum):
         G1 = auto()
 
@@ -270,7 +272,7 @@ async def test_initial_transition_to_nested_substate():
     assert actions_log == ["entry_Parent.A", "entry_ChildA.A1", "entry_GrandChildA1.G1"]
 
 
-def test_initial_transition_target_not_substate_error():
+def test_initial_transition_target_not_substate_error() -> None:
     sm = StateMachine[Any, Trigger](Parent.C)
     with pytest.raises(ConfigurationError) as excinfo:
         sm.configure(Parent.A).initial_transition(Parent.B)  # B is not a substate of A

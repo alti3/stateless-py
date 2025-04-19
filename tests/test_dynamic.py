@@ -81,7 +81,7 @@ def test_dynamic_sync_selector_with_args() -> None:
 async def test_dynamic_async_selector() -> None:
     target_state = State.C
 
-    async def selector():
+    async def selector() -> State:
         actions_log.append(f"async_selector_called_returns_{target_state.name}")
         return target_state
 

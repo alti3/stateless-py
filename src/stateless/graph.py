@@ -2,7 +2,7 @@
 Contains functions for generating graph representations (DOT, Mermaid) of the state machine.
 """
 
-from typing import TYPE_CHECKING, TypeVar, Any, Enum
+from typing import TYPE_CHECKING, TypeVar, Enum
 from .reflection import GuardInfo
 
 if TYPE_CHECKING:
@@ -16,14 +16,14 @@ StateT = TypeVar("StateT")
 TriggerT = TypeVar("TriggerT")
 
 
-def _get_state_name(state: Any) -> str:
+def _get_state_name(state: str | Enum) -> str:
     """Helper to get a string representation for a state."""
     if isinstance(state, Enum):
         return state.name
     return str(state)
 
 
-def _get_trigger_name(trigger: Any) -> str:
+def _get_trigger_name(trigger: str | Enum) -> str:
     """Helper to get a string representation for a trigger."""
     if isinstance(trigger, Enum):
         return trigger.name
@@ -51,7 +51,7 @@ def generate_dot_graph(sm_info: "StateMachineInfo") -> str:
 
     def add_nodes_and_edges(
         states: list[StateInfo], parent_cluster_name: str | None = None
-    ):
+    ) -> None:
         nonlocal node_lines, edge_lines, cluster_nodes
         for state_info in states:
             state_name = _get_state_name(state_info.underlying_state)
@@ -175,7 +175,7 @@ def generate_mermaid_graph(sm_info: "StateMachineInfo", direction: str = "TB") -
     edge_lines = []
     processed_states = set()
 
-    def add_mermaid_elements(states: list[StateInfo]):
+    def add_mermaid_elements(states: list[StateInfo]) -> None:
         nonlocal edge_lines
         for state_info in states:
             state_name = _get_state_name(state_info.underlying_state)
