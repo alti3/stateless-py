@@ -19,7 +19,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install uv and set up Python ${{ matrix.python-version }}
-      uses: astral-sh/setup-uv@v1 # Use the latest version or pin a specific one e.g., v1.1.1
+      uses: astral-sh/setup-uv@v5 # Use the latest version or pin a specific one e.g., v1.1.1
       with:
         python-version: ${{ matrix.python-version }}
         # Enable caching, invalidating if pyproject.toml changes
@@ -40,8 +40,8 @@ jobs:
     - name: Format with Ruff
       run: uvx ruff format --check .
 
-    - name: Type check with mypy
-      run: uvx mypy .
+    - name: Type check with ty
+      run: uvx ty check
 
     - name: Test with pytest
-      run: uvx pytest 
+      run: uv run pytest 
