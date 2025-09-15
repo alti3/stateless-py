@@ -1,7 +1,7 @@
 # --- Hatchling-specific configuration ---
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.8.17,<0.9.0"]
+build-backend = "uv_build"
 
 [project]
 name = "stateless-py"
@@ -47,18 +47,9 @@ graphing = [
 Homepage = "https://github.com/alti3/stateless-py"
 Repository = "https://github.com/alti3/stateless-py"
 
-[tool.hatch.version]
-path = "src/stateless/__init__.py"
-
-[tool.hatch.build.targets.sdist]
-include = [
-    "/src",
-    "/README.md",
-    "/LICENSE",
-]
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/stateless"]
+[tool.uv.build-backend]
+module-root = "src"
+module-name = "stateless"
 
 [tool.hatch.build]
 packages = ["src/stateless"]
