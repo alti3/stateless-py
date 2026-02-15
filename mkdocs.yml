@@ -1,0 +1,61 @@
+site_name: Stateless-py
+site_description: A Python library for building strongly-typed, fluent state machines
+repo_url: https://github.com/alti3/stateless-py
+repo_name: alti3/stateless-py
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quickstart: getting-started/quickstart.md
+  - Guide:
+      - Core Concepts: guide/core-concepts.md
+      - Configuration: guide/configuration.md
+      - Guards: guide/guards.md
+      - Actions: guide/actions.md
+      - Async and Firing Modes: guide/async.md
+      - Hierarchical States: guide/hierarchy.md
+      - Advanced Transitions: guide/advanced-transitions.md
+      - Triggering and Queries: guide/triggering-and-queries.md
+      - External State Storage: guide/external-state.md
+  - Introspection:
+      - Overview: introspection/overview.md
+      - Graphs: introspection/graphs.md
+  - Examples: examples/index.md
+  - API Reference:
+      - Overview: reference/index.md
+      - StateMachine: reference/state-machine.md
+      - StateConfiguration: reference/state-configuration.md
+      - Transition Model: reference/transition.md
+      - Reflection Models: reference/reflection-models.md
+      - Errors and Firing Modes: reference/errors-and-modes.md
+  - Architecture: architecture.md
+  - C# Parity: parity.md
+  - Development: development.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_source: false
