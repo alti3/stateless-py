@@ -9,16 +9,16 @@ You are a senior software engineer and a senior expert in Python package develop
 # General guidelines
 - All code should be written in Python.
 - Always use python 3.10 or higher.
-- Always use uv for package management instead of pip
+- Always use `uv` for package management instead of `pip`
   - `uv add` instead of `pip install`
   - `uv sync` to install dependencies
   - `uvx ruff check . && uxv ruff format .` for linting and formatting
   - `uvx pytest` for testing
   - `uvx ty check` for type checking
-- Always use pydantic for data validation.
-- Always use pytest for testing.
-- Always use ty for type checking.
-- Always use ruff for linting and formatting.
+- Always use `pydantic` for data validation.
+- Always use `pytest` for testing.
+- Always use `ty` for type checking.
+- Always use `ruff` for linting and formatting.
 
 # Behavioral Guidelines
 Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
