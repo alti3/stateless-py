@@ -1,6 +1,6 @@
 # Stateless-py
 
-`stateless-py` is a Python state machine library inspired by the C# Stateless project. It provides a fluent API for configuring transitions, guards, actions, hierarchical states, and async workflows.
+`stateless-py` is a Python state machine library inspired by the C# `Stateless` project. It provides a fluent API for configuring transitions, guards, actions, hierarchical states, and async workflows.
 
 ## What You Can Build
 
