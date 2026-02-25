@@ -29,7 +29,16 @@ nav:
   - Introspection:
       - Overview: introspection/overview.md
       - Graphs: introspection/graphs.md
-  - Examples: examples/index.md
+  - Examples:
+      - Overview: examples/index.md
+      - 01 Simple Phone Call: examples/01-simple-phone-call.md
+      - 02 Bug Tracker: examples/02-bug-tracker.md
+      - 03 Async Actions: examples/03-async-actions.md
+      - 04 Ignore and Reentry: examples/04-ignore-reentry.md
+      - 05 On Off Toggle: examples/05-on-off.md
+      - 06 Alarm Asyncio Workflow: examples/06-alarm-asyncio.md
+      - 07 JSON Serialization: examples/07-json-serialization.md
+      - 08 Advanced Features: examples/08-advanced-features.md
   - API Reference:
       - Overview: reference/index.md
       - StateMachine: reference/state-machine.md

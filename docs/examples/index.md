@@ -2,22 +2,24 @@
 
 Project examples live in `examples/`.
 
-## Included Scenarios
+## Example Pages
 
-- `01_simple_phone_call.py`: basic transitions and machine info/graph output
-- `02_bug_tracker.py`: external state storage and parameterized triggers
-- `03_async_actions.py`: async entry/exit patterns
-- `04_ignore_reentry.py`: ignore + reentry behavior
-- `05_on_off.py`: minimal toggle machine
-- `06_alarm_asyncio.py`: larger async orchestration workflow
-- `07_json_serialization.py`: serializing domain state while machine logic remains configured in code
-- `08_advanced_features.py`: mixed advanced features in one workflow
+- [01: Simple Phone Call](01-simple-phone-call.md)
+- [02: Bug Tracker](02-bug-tracker.md)
+- [03: Async Actions](03-async-actions.md)
+- [04: Ignore and Reentry](04-ignore-reentry.md)
+- [05: On Off Toggle](05-on-off.md)
+- [06: Alarm Asyncio Workflow](06-alarm-asyncio.md)
+- [07: JSON Serialization](07-json-serialization.md)
+- [08: Advanced Features](08-advanced-features.md)
 
 ## Running an Example
 
 ```bash
 uv run python examples/01_simple_phone_call.py
 ```
+
+Replace `01_simple_phone_call.py` with any file in `examples/`.
 
 ## Notes
 
