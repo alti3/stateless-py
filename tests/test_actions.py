@@ -107,14 +107,13 @@ def test_activate_deactivate_actions_sync() -> None:
     # Expected based on StateRepresentation implementation: Deactivate A, Exit A, Entry B, Activate B
     assert actions_log == [
         "deactivate_A",
-        "entry_B_from_State.A",
         "activate_B",
-    ]  # Assuming no exit action configured here
+    ]
 
     actions_log.clear()
     sm.fire(Trigger.Y)  # B -> A
     assert sm.state == State.A
-    assert actions_log == ["deactivate_B", "entry_A_from_State.B", "activate_A"]
+    assert actions_log == ["deactivate_B", "activate_A"]
 
 
 def test_on_entry_from_sync() -> None:
@@ -158,7 +157,9 @@ def test_sync_action_with_args() -> None:
     """Tests passing trigger arguments to sync actions."""
     entry_args = None
 
-    def entry_b_action(transition: Transition[State, Trigger], args: Sequence[Any]) -> None:
+    def entry_b_action(
+        transition: Transition[State, Trigger], args: Sequence[Any]
+    ) -> None:
         nonlocal entry_args
         entry_args = args
         actions_log.append(f"entry_B_args_{args}")
@@ -198,17 +199,16 @@ async def test_entry_exit_actions_async() -> None:
     sm.configure(State.A).on_entry(async_entry_a).on_exit(async_exit_a).permit(
         Trigger.X, State.B
     )
-    sm.configure(State.B).permit(Trigger.Y, State.A)
+    sm.configure(State.B).on_entry(sync_entry_b).permit(Trigger.Y, State.A)
 
     await sm.fire_async(Trigger.X)  # A -> B
     assert sm.state == State.B
     assert actions_log == [
         "async_exit_A_to_State.B",
-        "async_entry_A_from_State.A",
-    ]  # Assuming B has no entry action here
+        "entry_B_from_State.A",
+    ]
 
     actions_log.clear()
-    sm.configure(State.B).on_entry(sync_entry_b)  # Add sync entry for B
     await sm.fire_async(Trigger.Y)  # B -> A
     assert sm.state == State.A
     # Order: Exit B (none), Entry A (async)
@@ -263,7 +263,9 @@ async def test_async_action_with_args() -> None:
     """Tests passing trigger arguments to async actions."""
     entry_args = None
 
-    async def entry_b_action(transition: Transition[State, Trigger], args: Sequence[Any]) -> None:
+    async def entry_b_action(
+        transition: Transition[State, Trigger], args: Sequence[Any]
+    ) -> None:
         nonlocal entry_args
         entry_args = args
         actions_log.append(f"async_entry_B_args_{args}")

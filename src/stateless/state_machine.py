@@ -2,6 +2,8 @@
 The main StateMachine class.
 """
 
+from __future__ import annotations
+
 from typing import (
     Generic,
     Any,
@@ -13,9 +15,10 @@ from enum import Enum
 import asyncio
 import threading
 import inspect
+import warnings
 
-from .state_representation import StateRepresentation, Args  # Assuming this will exist
-from .state_configuration import StateConfiguration  # Assuming this will exist
+from .state_representation import StateRepresentation, Args
+from .state_configuration import StateConfiguration
 from .transition import (
     StateT,
     TriggerT,
@@ -35,7 +38,7 @@ from .reflection import (
     GuardInfo,
     TriggerInfo,
     InternalTransitionInfo,
-)  # Added InternalTransitionInfo
+)
 from .trigger_behaviour import (
     TriggerBehaviour,
     IgnoredTriggerBehaviour,
@@ -51,7 +54,6 @@ TransitionCallbackSync = Callable[[Transition[StateT, TriggerT]], None]
 TransitionCallbackAsync = Callable[[Transition[StateT, TriggerT]], Awaitable[None]]
 
 
-# Placeholder implementation
 class StateMachine(Generic[StateT, TriggerT]):
     """
     A configurable state machine.
@@ -102,6 +104,7 @@ class StateMachine(Generic[StateT, TriggerT]):
             if firing_mode == FiringMode.QUEUED
             else None
         )
+        self._queued_triggers = self._queue
         self._queue_processor_task: asyncio.Task | None = None
         self._queue_started = False  # Flag to track if processor started
         self._trigger_param_types: dict[
@@ -119,8 +122,6 @@ class StateMachine(Generic[StateT, TriggerT]):
             try:
                 self._current_state = self._state_accessor()
                 if self._current_state != initial_state:
-                    import warnings
-
                     warnings.warn(
                         f"Initial state '{initial_state!r}' configured for the machine "
                         f"does not match the state '{self._current_state!r}' obtained from the state accessor upon initialization. "
@@ -183,39 +184,45 @@ class StateMachine(Generic[StateT, TriggerT]):
                 # No loop running, will try again on next fire_async
                 self._queue_started = False
             except Exception as e:
-                # Log or handle other potential errors during task creation
-                print(f"Error starting queue processor: {e}")
+                warnings.warn(
+                    f"Error starting queue processor: {e}",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
                 self._queue_started = False
 
     async def _process_queue(self) -> None:
         """Processes triggers from the queue sequentially."""
         if not self._queue:
             return
-        print("Queue processor started.")  # Debugging
         while True:
             try:
                 trigger, args = await self._queue.get()
-                print(
-                    f"Processing queued trigger: {trigger} with args: {args}"
-                )  # Debugging
                 try:
                     # Use internal fire method that doesn't check firing mode again
                     await self._internal_fire_async(trigger, *args)
                 except InvalidTransitionError as e:
-                    # Log unmet trigger/guard errors from queue processing
-                    print(f"Queued trigger '{trigger}' failed: {e}")
+                    warnings.warn(
+                        f"Queued trigger {trigger!r} failed: {e}",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
                 except Exception as e:
-                    # Log other unexpected errors during queued trigger execution
-                    print(f"Unexpected error processing queued trigger {trigger}: {e}")
-                    # Optionally: break loop or implement retry/dead-letter queue?
+                    warnings.warn(
+                        f"Unexpected error processing queued trigger {trigger!r}: {e}",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
                 finally:
                     self._queue.task_done()
             except asyncio.CancelledError:
-                print("Queue processor cancelled.")  # Debugging
                 break  # Exit loop if task is cancelled
             except Exception as e:
-                # Error during queue.get() or task_done() ?
-                print(f"Error in queue processing loop: {e}")
+                warnings.warn(
+                    f"Error in queue processing loop: {e}",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
                 # Avoid busy-looping on persistent errors
                 await asyncio.sleep(1)
 
@@ -252,41 +259,15 @@ class StateMachine(Generic[StateT, TriggerT]):
         self, transition: Transition[StateT, TriggerT]
     ) -> list[Callable[[], Awaitable[None]]]:
         """Gets the stack of exit actions to perform."""
-        actions: list[Callable[[], Awaitable[None]]] = []
         source_rep = self._get_representation(transition.source)
-        dest_rep = self._get_representation(transition.destination)
-        common_ancestor = self._find_common_ancestor(source_rep, dest_rep)
-
-        current = source_rep
-        while current is not None and current != common_ancestor:
-            # Create closure to capture current state's exit action execution
-            rep_to_exit = current
-            actions.append(lambda rep=rep_to_exit: rep.exit(transition))  # type: ignore[misc]
-            current = current.superstate
-        return actions
+        return [lambda: source_rep.exit(transition)]  # type: ignore[misc]
 
     def _get_entry_actions(
         self, transition: Transition[StateT, TriggerT], args: Args
     ) -> list[Callable[[], Awaitable[None]]]:
         """Gets the stack of entry actions to perform."""
-        actions: list[Callable[[], Awaitable[None]]] = []
-        source_rep = self._get_representation(transition.source)
         dest_rep = self._get_representation(transition.destination)
-        common_ancestor = self._find_common_ancestor(source_rep, dest_rep)
-
-        # Build path from common ancestor down to destination
-        path: list[StateRepresentation[StateT, TriggerT]] = []
-        current = dest_rep
-        while current is not None and current != common_ancestor:
-            path.append(current)
-            current = current.superstate
-
-        # Entry actions execute from superstate down to substate
-        for rep_to_enter in reversed(path):
-            # Create closure
-            actions.append(lambda rep=rep_to_enter: rep.enter(transition, args))  # type: ignore[misc]
-
-        return actions
+        return [lambda: dest_rep.enter(transition, args)]  # type: ignore[misc]
 
     def fire(self, trigger: TriggerT, *args: Any) -> None:
         """
@@ -338,16 +319,38 @@ class StateMachine(Generic[StateT, TriggerT]):
             # For now, allow potential reentrancy in async immediate mode.
             await self._internal_fire_async(trigger, *args, sync_mode=False)
 
+    async def start(self) -> None:
+        """Start the queued trigger processor when queued firing mode is enabled."""
+        if self._firing_mode == FiringMode.QUEUED:
+            self._ensure_queue_processor_started()
+            if not self._queue_started:
+                raise RuntimeError(
+                    "Cannot start queue processor: no running event loop."
+                )
+
+    async def stop(self) -> None:
+        """Stop the queued trigger processor."""
+        await self.close_async()
+
     async def _internal_fire_async(
         self, trigger: TriggerT, *args: Any, sync_mode: bool = False
     ) -> None:
         """Core logic for firing a trigger, handling both sync and async paths."""
         current_state = self.state
-        representation = self._get_representation(current_state)
+        representation = self._state_representations.get(current_state)
+        if representation is None:
+            await self._handle_unmet_trigger(current_state, trigger, args, sync_mode)
+            return
 
         # Find handler (searches up the hierarchy)
         handler_result = await representation.find_handler_for_trigger(trigger, args)
         handler = handler_result.handler
+
+        if handler is None and handler_result.unmet_guard_conditions:
+            raise InvalidTransitionError(
+                f"Trigger '{trigger!r}' is valid from state {current_state!r} but guard conditions were not met. "
+                f"Args: {args}. Unmet guards: {handler_result.unmet_guard_conditions}"
+            )
 
         if handler is None:
             # No handler found anywhere in the hierarchy
@@ -377,16 +380,7 @@ class StateMachine(Generic[StateT, TriggerT]):
                 )
             # Entry/Exit/Activate/Deactivate actions will be checked later if a transition occurs
 
-        # Check guards
-        guards_met = await handler.guard.conditions_met_async(args)
-
-        if not guards_met:
-            unmet_desc = await handler.guard.unmet_conditions_async(args)
-            # Raise specific error for unmet guards
-            raise InvalidTransitionError(
-                f"Trigger '{trigger!r}' is valid from state {current_state!r} but guard conditions were not met. "
-                f"Args: {args}. Unmet guards: {unmet_desc}"
-            )
+        # Guards were evaluated while locating the handler.
 
         # --- Guards passed, determine transition ---
 
@@ -426,7 +420,9 @@ class StateMachine(Generic[StateT, TriggerT]):
 
         # Get representation for destination (needed for later checks and entry/exit)
         # Cast safe because destination cannot be None here for non-internal transitions
-        dest_representation = self._get_representation(cast(StateT, destination))
+        dest_representation = self._get_or_add_state_representation(
+            cast(StateT, destination)
+        )
 
         # --- Call on_transitioned callbacks (before lock) ---
         if self._on_transitioned_async_callback:
@@ -467,13 +463,6 @@ class StateMachine(Generic[StateT, TriggerT]):
                 await internal_handler.execute_internal_action(transition, args)
 
                 # --- Call on_transition_completed callbacks (after internal action) ---
-                if self._on_transition_completed_async_callback:
-                    if sync_mode:
-                        raise TypeError(
-                            f"Cannot execute async on_transition_completed_async_callback for trigger '{trigger!r}' in sync mode."
-                        )
-                    await self._on_transition_completed_async_callback(transition)
-
                 if self._on_transition_completed_callback:
                     if sync_mode and inspect.iscoroutinefunction(
                         self._on_transition_completed_callback
@@ -488,6 +477,13 @@ class StateMachine(Generic[StateT, TriggerT]):
                                 f"on_transition_completed_callback for trigger '{trigger!r}' returned awaitable in sync mode."
                             )
                         await result
+
+                if self._on_transition_completed_async_callback:
+                    if sync_mode:
+                        raise TypeError(
+                            f"Cannot execute async on_transition_completed_async_callback for trigger '{trigger!r}' in sync mode."
+                        )
+                    await self._on_transition_completed_async_callback(transition)
             else:
                 # --- Standard Transition (including Reentry) ---
                 exit_actions = self._get_exit_actions(transition)
@@ -548,14 +544,13 @@ class StateMachine(Generic[StateT, TriggerT]):
                 for action_func in entry_actions:
                     await action_func()
 
-                # --- Call on_transition_completed callbacks (after entry actions) ---
-                if self._on_transition_completed_async_callback:
-                    if sync_mode:
-                        raise TypeError(
-                            f"Cannot execute async on_transition_completed_async_callback for trigger '{trigger!r}' in sync mode."
-                        )
-                    await self._on_transition_completed_async_callback(transition)
+                initial_target = self._resolve_initial_transition_target(
+                    dest_representation
+                )
+                if initial_target is not None and self._state_mutator:
+                    self._state_mutator(initial_target)
 
+                # --- Call on_transition_completed callbacks (after entry actions) ---
                 if self._on_transition_completed_callback:
                     if sync_mode and inspect.iscoroutinefunction(
                         self._on_transition_completed_callback
@@ -570,6 +565,13 @@ class StateMachine(Generic[StateT, TriggerT]):
                                 f"on_transition_completed_callback for trigger '{trigger!r}' returned awaitable in sync mode."
                             )
                         await result
+
+                if self._on_transition_completed_async_callback:
+                    if sync_mode:
+                        raise TypeError(
+                            f"Cannot execute async on_transition_completed_async_callback for trigger '{trigger!r}' in sync mode."
+                        )
+                    await self._on_transition_completed_async_callback(transition)
 
     async def _handle_unmet_trigger(
         self, state: StateT, trigger: TriggerT, args: Args, sync_mode: bool
@@ -607,7 +609,9 @@ class StateMachine(Generic[StateT, TriggerT]):
         Raises TypeError if any potential guard is asynchronous.
         """
         current_state = self.state
-        representation = self._get_representation(current_state)
+        representation = self._state_representations.get(current_state)
+        if representation is None:
+            return False
         try:
             # Need to synchronously find handler and check guards
             handler, is_async_guard = self._find_handler_sync(representation, trigger)
@@ -662,10 +666,24 @@ class StateMachine(Generic[StateT, TriggerT]):
 
         return None, False  # No handler found
 
+    def _resolve_initial_transition_target(
+        self, representation: StateRepresentation[StateT, TriggerT]
+    ) -> StateT | None:
+        """Returns the deepest configured initial transition target, if any."""
+        target = representation.initial_transition_target
+        if target is None:
+            return None
+
+        target_rep = self._get_or_add_state_representation(target)
+        nested = self._resolve_initial_transition_target(target_rep)
+        return nested if nested is not None else target
+
     async def can_fire_async(self, trigger: TriggerT, *args: Any) -> bool:
         """Checks if the specified trigger can be fired in the current state (asynchronously)."""
         current_state = self.state
-        representation = self._get_representation(current_state)
+        representation = self._state_representations.get(current_state)
+        if representation is None:
+            return False
         try:
             handler_result = await representation.find_handler_for_trigger(
                 trigger, args
@@ -683,7 +701,9 @@ class StateMachine(Generic[StateT, TriggerT]):
         """
         permitted: list[TriggerT] = []
         current_state = self.state
-        representation = self._get_representation(current_state)
+        representation = self._state_representations.get(current_state)
+        if representation is None:
+            return []
         processed_triggers = set()
 
         rep: StateRepresentation[StateT, TriggerT] | None = representation
@@ -733,7 +753,9 @@ class StateMachine(Generic[StateT, TriggerT]):
         """Gets the list of triggers permitted in the current state (asynchronous check)."""
         permitted: list[TriggerT] = []
         current_state = self.state
-        representation = self._get_representation(current_state)
+        representation = self._state_representations.get(current_state)
+        if representation is None:
+            return []
         processed_triggers = set()
 
         # Check current state and all superstates
@@ -797,7 +819,12 @@ class StateMachine(Generic[StateT, TriggerT]):
         Returns:
             The original trigger.
         """
-        self._validate_trigger_type(trigger)  # Ensure trigger is hashable etc.
+        try:
+            hash(trigger)
+        except TypeError as e:
+            raise ConfigurationError(
+                f"Triggers must be hashable. Got trigger: {trigger!r}"
+            ) from e
         self._trigger_param_types[trigger] = list(param_types)
         # We return the original trigger, not a wrapper, simplifying the `fire` call.
         return trigger
@@ -966,10 +993,12 @@ class StateMachine(Generic[StateT, TriggerT]):
         """Attempt to cleanup queue processor task on deletion."""
         # Note: __del__ is unreliable. Provide an explicit close method if robust cleanup is needed.
         if self._queue_processor_task and not self._queue_processor_task.done():
-            print(
-                "Warning: State machine garbage collected without explicit close_async. "
-                "Attempting to cancel queue processor task in __del__ (unreliable)..."
-            )  # Debugging/Warning
+            warnings.warn(
+                "State machine garbage collected without explicit close_async. "
+                "Attempting to cancel queue processor task in __del__.",
+                ResourceWarning,
+                stacklevel=2,
+            )
             try:
                 # Get loop associated with the task if possible
                 loop = self._queue_processor_task.get_loop()
@@ -983,7 +1012,11 @@ class StateMachine(Generic[StateT, TriggerT]):
                     self._queue_processor_task.cancel()
             except Exception as e:
                 # Avoid raising errors during garbage collection
-                print(f"Error attempting to cancel queue task in __del__: {e}")
+                warnings.warn(
+                    f"Error attempting to cancel queue task in __del__: {e}",
+                    ResourceWarning,
+                    stacklevel=2,
+                )
 
     async def close_async(self) -> None:
         """
@@ -999,29 +1032,24 @@ class StateMachine(Generic[StateT, TriggerT]):
         """
         task = self._queue_processor_task
         if task and not task.done():
-            print("Closing state machine: Cancelling queue processor...")  # Debugging
             task.cancel()
             try:
                 # Wait for the task to acknowledge cancellation and finish
                 await task
             except asyncio.CancelledError:
-                # This is expected when cancelling the task
-                print("Queue processor task successfully cancelled.")  # Debugging
+                pass
             except Exception as e:
-                # Log unexpected errors during shutdown
-                print(f"Error during queue processor shutdown: {e}")
+                warnings.warn(
+                    f"Error during queue processor shutdown: {e}",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
             finally:
                 # Ensure flags are reset even if waiting raised an unexpected error
                 self._queue_started = False
                 self._queue_processor_task = None  # Mark as closed
-                print("Queue processor resources released.")  # Debugging
         elif not task:
-            print(
-                "Close called but no queue processor task exists (already closed or never started)."
-            )  # Debugging
+            self._queue_started = False
         else:  # Task exists but is already done
-            print(
-                "Close called but queue processor task was already done."
-            )  # Debugging
             self._queue_started = False  # Ensure flag is reset
             self._queue_processor_task = None  # Mark as closed (or confirm it's done)

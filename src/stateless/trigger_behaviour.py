@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import (
     Generic,
     Any,
@@ -25,14 +27,14 @@ class TriggerBehaviourResult(Generic[StateT, TriggerT]):
 
     def __init__(
         self,
-        handler: "TriggerBehaviour[StateT, TriggerT]" | None,
+        handler: TriggerBehaviour[StateT, TriggerT] | None,
         unmet_guard_conditions: list[str],
     ):
         self._handler = handler
         self._unmet_guard_conditions = unmet_guard_conditions
 
     @property
-    def handler(self) -> "TriggerBehaviour[StateT, TriggerT]" | None:
+    def handler(self) -> TriggerBehaviour[StateT, TriggerT] | None:
         """The trigger behaviour that handles the trigger (if guards are met)."""
         return self._handler
 

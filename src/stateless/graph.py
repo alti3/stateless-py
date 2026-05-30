@@ -2,7 +2,10 @@
 Contains functions for generating graph representations (DOT, Mermaid) of the state machine.
 """
 
-from typing import TYPE_CHECKING, TypeVar, Enum
+from __future__ import annotations
+
+from enum import Enum
+from typing import TYPE_CHECKING, TypeVar
 from .reflection import GuardInfo
 
 if TYPE_CHECKING:
@@ -58,6 +61,8 @@ def generate_dot_graph(sm_info: "StateMachineInfo") -> str:
             if state_name in processed_states:
                 continue
             processed_states.add(state_name)
+            if parent_cluster_name is not None:
+                cluster_nodes.setdefault(state_name, parent_cluster_name)
 
             node_id = f'"{state_name}"'  # Ensure names are quoted
 
@@ -94,13 +99,13 @@ def generate_dot_graph(sm_info: "StateMachineInfo") -> str:
                 # Add lhead if destination is a cluster
                 dest_cluster = cluster_nodes.get(dest_name)
                 dest_opts = f'lhead="{dest_cluster}"' if dest_cluster else ""
-                opts = (
-                    f"[{origin_opts}{',' if origin_opts and dest_opts else ''}{dest_opts}]"
-                    if origin_opts or dest_opts
-                    else ""
-                )
+                attrs = [f'label="{trigger_name}{guards_str}"']
+                if origin_opts:
+                    attrs.append(origin_opts)
+                if dest_opts:
+                    attrs.append(dest_opts)
                 edge_lines.append(
-                    f'  {edge_origin_node} -> {dest_node_id} [label="{trigger_name}{guards_str}"]{opts};'
+                    f"  {edge_origin_node} -> {dest_node_id} [{', '.join(attrs)}];"
                 )
 
             # Ignored Triggers (Self-loop)
@@ -110,6 +115,14 @@ def generate_dot_graph(sm_info: "StateMachineInfo") -> str:
                 # Self-loop doesn't need ltail/lhead
                 edge_lines.append(
                     f'  {edge_origin_node} -> {edge_origin_node} [label="{trigger_name}{guards_str} (ignored)"];'
+                )
+
+            # Internal Transitions (Self-loop)
+            for internal in state_info.internal_transitions:
+                trigger_name = _get_trigger_name(internal.trigger.underlying_trigger)
+                guards_str = _format_guards(internal.guard_conditions)
+                edge_lines.append(
+                    f'  {edge_origin_node} -> {edge_origin_node} [label="{trigger_name}{guards_str}"];'
                 )
 
             # Dynamic Transitions (Self-loop, dashed)
@@ -192,7 +205,7 @@ def generate_mermaid_graph(sm_info: "StateMachineInfo", direction: str = "TB") -
                     target_name = _get_state_name(state_info.initial_transition_target)
                     lines.append(f"        [*] --> {target_name}")
                 add_mermaid_elements(state_info.substates)
-                lines.append("    }")
+                lines.append("    } ")
             # else: # Simple states are implicitly defined by transitions
 
             # Transitions from this state
@@ -212,6 +225,14 @@ def generate_mermaid_graph(sm_info: "StateMachineInfo", direction: str = "TB") -
                 guards_str = _format_guards(ignored.guard_conditions)
                 edge_lines.append(
                     f"    {origin_name} --> {origin_name} : {trigger_name}{guards_str} (ignored)"
+                )
+
+            # Internal (Self-loop)
+            for internal in state_info.internal_transitions:
+                trigger_name = _get_trigger_name(internal.trigger.underlying_trigger)
+                guards_str = _format_guards(internal.guard_conditions)
+                edge_lines.append(
+                    f"    {origin_name} --> {origin_name} : {trigger_name}{guards_str}"
                 )
 
             # Dynamic (Self-loop with description)
@@ -247,10 +268,9 @@ def visualize_graph(
     try:
         import graphviz  # type: ignore
     except ImportError:
-        print(
-            "Optional dependency 'graphviz' not found. Install with 'pip install stateless-py[graphing]'"
-        )
-        return
+        raise RuntimeError(
+            "Optional dependency 'graphviz' not found. Install with 'pip install stateless-py[graphing]'."
+        ) from None
 
     sm_info = sm.get_info()
     dot_graph = generate_dot_graph(sm_info)
@@ -258,10 +278,9 @@ def visualize_graph(
     try:
         graph = graphviz.Source(dot_graph, filename=filename, format=format)
         graph.render(view=view, cleanup=True)
-        print(f"Graph saved to {filename}.{format}")
     except graphviz.backend.execute.ExecutableNotFound:
-        print(
+        raise RuntimeError(
             "Graphviz executable not found. Please install Graphviz (https://graphviz.org/download/) and ensure it's in your PATH."
-        )
+        ) from None
     except Exception as e:
-        print(f"Error rendering graph: {e}")
+        raise RuntimeError(f"Error rendering graph: {e}") from e

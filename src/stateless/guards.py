@@ -181,3 +181,10 @@ class TransitionGuard:
 
 # Singleton for no guards
 EMPTY_GUARD = TransitionGuard([])
+
+
+def guards_from_definitions(guards: Sequence[GuardDef]) -> TransitionGuard:
+    """Creates a transition guard from guard definitions."""
+    if not guards:
+        return EMPTY_GUARD
+    return TransitionGuard.from_definitions(guards)

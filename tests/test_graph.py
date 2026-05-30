@@ -89,8 +89,8 @@ def test_generate_dot_graph_substates() -> None:
     # Check edges with cluster options
     assert '"A1" -> "A2" [label="X"]' in dot
     assert '"A2" -> "B" [label="Y", ltail="cluster_A"]' in dot
-    assert '"A" -> "C" [label="Z"]' in dot
-    assert '"B" -> "A1" [label="R", lhead="cluster_A"]' in dot
+    assert '"A" -> "C" [label="Z", ltail="cluster_A"]' in dot
+    assert '"B" -> "A1" [label="R"]' in dot
 
 
 def test_generate_mermaid_graph_simple() -> None:

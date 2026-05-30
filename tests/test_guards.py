@@ -9,10 +9,12 @@ from stateless import StateMachine, InvalidTransitionError
 class State(Enum):
     A = auto()
     B = auto()
+    C = auto()
 
 
 class Trigger(Enum):
     X = auto()
+    Y = auto()
 
 
 # --- Sync Guards ---

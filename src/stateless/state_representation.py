@@ -2,6 +2,8 @@
 Internal representation of a state and its associated behaviours (transitions, actions).
 """
 
+from __future__ import annotations
+
 from typing import (
     Generic,
     Any,
@@ -169,14 +171,16 @@ class StateRepresentation(Generic[StateT, TriggerT]):
         unmet_guards: list[str] = []
 
         for behaviour in possible:
-            guards_met = await behaviour.guard.conditions_met_async(args)
-            if guards_met:
+            unmet = []
+            for condition in behaviour.guard.conditions:
+                if not await condition.is_met_async(args):
+                    unmet.append(condition.description)
+
+            if not unmet:
                 # Found a behaviour whose guards are met
                 return TriggerBehaviourResult(behaviour, [])
-            else:
-                # Guards not met, collect descriptions
-                unmet = await behaviour.guard.unmet_conditions_async(args)
-                unmet_guards.extend(unmet)
+
+            unmet_guards.extend(unmet)
 
         # No behaviour found with met guards, return collected unmet guard descriptions
         # If 'possible' was empty, unmet_guards will also be empty.
@@ -193,7 +197,7 @@ class StateRepresentation(Generic[StateT, TriggerT]):
             await self._execute_activate_actions_async()  # Re-activate on reentry
         elif is_initial or not self.is_included_in(transition.source):
             # Entering from outside or via initial transition
-            if self.superstate:
+            if self.superstate and not is_initial:
                 # Ensure superstate is entered first (recursive call)
                 await self.superstate.enter(transition, entry_args)
 

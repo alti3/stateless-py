@@ -296,81 +296,79 @@ def _build_wrapper(
     """Builds a wrapper function to adapt the user's action callable to the expected signature."""
     sig = inspect.signature(action)
     params = list(sig.parameters.values())
-    param_names = list(sig.parameters.keys())
     has_varargs = any(p.kind == p.VAR_POSITIONAL for p in params)
+    has_varkw = any(p.kind == p.VAR_KEYWORD for p in params)
+    positional_params = [
+        p for p in params if p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)
+    ]
+    required_keyword_only = [
+        p
+        for p in params
+        if p.kind == p.KEYWORD_ONLY and p.default == inspect.Parameter.empty
+    ]
 
-    # Determine which of the expected args the action actually accepts
-    accepted_args_indices = []
-    for i, arg_name in enumerate(expected_args):
-        if arg_name in param_names:
-            accepted_args_indices.append(i)
-        elif f"_{arg_name}" in param_names:  # Allow private-like names e.g. _transition
-            accepted_args_indices.append(i)
-        # Basic check for type hints (less reliable)
-        # elif any(p.annotation == expected_types[i] for p in params if p.annotation != inspect.Parameter.empty):
-        #     accepted_args_indices.append(i)
-
-    num_required_params = len(
-        [
-            p
-            for p in params
-            if p.kind == p.POSITIONAL_OR_KEYWORD and p.default == p.empty
-        ]
-    )
-
-    # If the function takes *args, assume it can handle all expected args it doesn't explicitly name.
-    # This is a simplification.
-    if has_varargs:
-        # Pass only the explicitly named args first, then the rest if *args exists
-        explicit_indices = [
-            i for i, name in enumerate(expected_args) if name in param_names
-        ]
-        vararg_indices = [
-            i for i, name in enumerate(expected_args) if name not in param_names
-        ]
-
-        if is_async:
-
-            async def async_vararg_wrapper(*all_args: Any) -> None:
-                call_args = [all_args[i] for i in explicit_indices]
-                call_args.extend(all_args[i] for i in vararg_indices)
-                await action(*call_args)
-
-            return async_vararg_wrapper
-        else:
-
-            def sync_vararg_wrapper(*all_args: Any) -> None:
-                call_args = [all_args[i] for i in explicit_indices]
-                call_args.extend(all_args[i] for i in vararg_indices)
-                action(*call_args)
-
-            return sync_vararg_wrapper
-
-    # If not using *args, only pass the accepted arguments
-    elif len(accepted_args_indices) >= num_required_params:
-        if is_async:
-
-            async def async_wrapper(*all_args: Any) -> None:
-                call_args = [all_args[i] for i in accepted_args_indices]
-                await action(*call_args)
-
-            return async_wrapper
-        else:
-
-            def sync_wrapper(*all_args: Any) -> None:
-                call_args = [all_args[i] for i in accepted_args_indices]
-                action(*call_args)
-
-            return sync_wrapper
-    else:
-        # Not enough expected args match the function signature without *args
-        # This case might indicate a configuration error, but we create a wrapper that will likely fail at runtime.
-        # Or we could raise a ConfigurationError here. Let's raise.
-        action_name = getattr(action, "__name__", "<lambda>")
+    action_name = getattr(action, "__name__", "<lambda>")
+    if has_varkw and not positional_params and not has_varargs:
         raise ConfigurationError(
-            f"Action '{action_name}' signature {sig} is incompatible with expected arguments ({', '.join(expected_args)}). "
-            f"It requires {num_required_params} arguments but only {len(accepted_args_indices)} could be mapped."
+            f"Action '{action_name}' signature {sig} is incompatible: **kwargs-only actions are not supported."
         )
+    if required_keyword_only:
+        raise ConfigurationError(
+            f"Action '{action_name}' signature {sig} is incompatible: required keyword-only parameters are not supported."
+        )
+
+    context_names = set(expected_args)
+    private_context_names = {f"_{name}": name for name in expected_args}
+
+    def build_call_args(all_args: tuple[Any, ...]) -> list[Any]:
+        context = dict(zip(expected_args, all_args, strict=False))
+        trigger_args = tuple(context.get("args", ()))
+
+        if has_varargs:
+            if expected_args == ["args"]:
+                return list(trigger_args)
+            return list(all_args)
+
+        call_args: list[Any] = []
+        next_trigger_arg = 0
+        fallback_context = iter(all_args)
+
+        for param in positional_params:
+            if param.name in context_names:
+                value = context[param.name]
+            elif param.name in private_context_names:
+                value = context[private_context_names[param.name]]
+            elif "transition" in context and len(positional_params) == 1:
+                value = context["transition"]
+            elif not context and len(positional_params) == 1:
+                value = None
+            elif next_trigger_arg < len(trigger_args):
+                value = trigger_args[next_trigger_arg]
+                next_trigger_arg += 1
+            else:
+                try:
+                    value = next(fallback_context)
+                except StopIteration:
+                    if param.default != inspect.Parameter.empty:
+                        continue
+                    raise ConfigurationError(
+                        f"Action '{action_name}' signature {sig} is incompatible with the supplied arguments."
+                    ) from None
+            call_args.append(value)
+
+        return call_args
+
+    if is_async:
+
+        async def async_wrapper(*all_args: Any) -> None:
+            return await action(*build_call_args(all_args))
+
+        return async_wrapper
+
+    def sync_wrapper(*all_args: Any) -> None:
+        return action(*build_call_args(all_args))
+
+    return sync_wrapper
 
 
 def create_entry_action_behavior(
@@ -399,7 +397,9 @@ def create_entry_action_behavior(
         action_behavior = SyncEntryAction(sync_wrapped, invocation_info)
 
     if trigger is not None:
-        action_behavior = EntryActionBehaviorFromTrigger(trigger, action_behavior)
+        action_behavior = EntryActionBehaviorFromTrigger[StateT, TriggerT](
+            trigger, action_behavior
+        )
 
     return action_behavior
 

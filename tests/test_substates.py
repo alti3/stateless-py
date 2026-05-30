@@ -41,19 +41,21 @@ def setup_function() -> None:
 
 
 def entry(state: Any) -> Callable[[Transition[Any, Trigger]], None]:
-    return lambda t: actions_log.append(f"entry_{state.name}")
+    return lambda t: actions_log.append(f"entry_{type(state).__name__}.{state.name}")
 
 
 def exit_(state: Any) -> Callable[[Transition[Any, Trigger]], None]:
-    return lambda t: actions_log.append(f"exit_{state.name}")
+    return lambda t: actions_log.append(f"exit_{type(state).__name__}.{state.name}")
 
 
 def activate(state: Any) -> Callable[[Transition[Any, Trigger]], None]:
-    return lambda t: actions_log.append(f"activate_{state.name}")
+    return lambda t: actions_log.append(f"activate_{type(state).__name__}.{state.name}")
 
 
 def deactivate(state: Any) -> Callable[[Transition[Any, Trigger]], None]:
-    return lambda t: actions_log.append(f"deactivate_{state.name}")
+    return lambda t: actions_log.append(
+        f"deactivate_{type(state).__name__}.{state.name}"
+    )
 
 
 # --- Basic Hierarchy and Transitions ---
@@ -174,11 +176,11 @@ async def test_substate_action_order_full() -> None:
     # Transition C -> A1 (enters A, then A1; activates A, then A1)
     await sm.fire_async(Trigger.GO_A1)
     assert sm.state == ChildA.A1
-    # Order: Entry Super -> Entry Sub -> Activate Super -> Activate Sub
+    # A parent state is fully entered and activated before entering the substate.
     assert actions_log == [
         "entry_Parent.A",
-        "entry_ChildA.A1",
         "activate_Parent.A",
+        "entry_ChildA.A1",
         "activate_ChildA.A1",
     ]
 
@@ -190,12 +192,12 @@ async def test_substate_action_order_full() -> None:
     assert sm.state == ChildB.B1
     assert actions_log == [
         "deactivate_ChildA.A1",
-        "deactivate_Parent.A",
         "exit_ChildA.A1",
+        "deactivate_Parent.A",
         "exit_Parent.A",
         "entry_Parent.B",
-        "entry_ChildB.B1",
         "activate_Parent.B",
+        "entry_ChildB.B1",
         "activate_ChildB.B1",
     ]
 

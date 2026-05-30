@@ -38,6 +38,9 @@ def test_dynamic_sync_selector() -> None:
 
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).dynamic(Trigger.DYNAMIC_MOVE, selector)
+    sm.configure(State.C).dynamic(Trigger.DYNAMIC_MOVE, selector)
+    sm.configure(State.C).dynamic(Trigger.DYNAMIC_MOVE, selector)
+    sm.configure(State.C).dynamic(Trigger.DYNAMIC_MOVE, selector)
 
     sm.fire(Trigger.DYNAMIC_MOVE)
     assert sm.state == State.C
@@ -60,6 +63,8 @@ def test_dynamic_sync_selector_with_args() -> None:
 
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).dynamic(Trigger.DYNAMIC_MOVE, selector)
+    sm.configure(State.C).dynamic(Trigger.DYNAMIC_MOVE, selector)
+    sm.configure(State.D).dynamic(Trigger.DYNAMIC_MOVE, selector)
 
     sm.fire(Trigger.DYNAMIC_MOVE, 10, True)
     assert sm.state == State.C
@@ -87,6 +92,7 @@ async def test_dynamic_async_selector() -> None:
 
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).dynamic(Trigger.DYNAMIC_MOVE, selector)
+    sm.configure(State.C).dynamic(Trigger.DYNAMIC_MOVE, selector)
 
     await sm.fire_async(Trigger.DYNAMIC_MOVE)
     assert sm.state == State.C
@@ -104,6 +110,7 @@ async def test_dynamic_async_selector_with_args() -> None:
 
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).dynamic(Trigger.DYNAMIC_MOVE, selector)
+    sm.configure(State.C).dynamic(Trigger.DYNAMIC_MOVE, selector)
 
     await sm.fire_async(Trigger.DYNAMIC_MOVE, "target_c")
     assert sm.state == State.C

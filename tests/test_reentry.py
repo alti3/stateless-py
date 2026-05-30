@@ -25,19 +25,19 @@ def setup_function() -> None:
 
 
 def entry(s: State) -> Callable[[Transition[State, Trigger]], None]:
-    return lambda t: actions_log.append(f"entry_{s.name}")
+    return lambda t: actions_log.append(f"entry_{type(s).__name__}.{s.name}")
 
 
 def exit_(s: State) -> Callable[[Transition[State, Trigger]], None]:
-    return lambda t: actions_log.append(f"exit_{s.name}")
+    return lambda t: actions_log.append(f"exit_{type(s).__name__}.{s.name}")
 
 
 def activate(s: State) -> Callable[[Transition[State, Trigger]], None]:
-    return lambda t: actions_log.append(f"activate_{s.name}")
+    return lambda t: actions_log.append(f"activate_{type(s).__name__}.{s.name}")
 
 
 def deactivate(s: State) -> Callable[[Transition[State, Trigger]], None]:
-    return lambda t: actions_log.append(f"deactivate_{s.name}")
+    return lambda t: actions_log.append(f"deactivate_{type(s).__name__}.{s.name}")
 
 
 # --- Basic Reentry ---

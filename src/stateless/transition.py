@@ -41,6 +41,11 @@ class Transition(Generic[StateT, TriggerT]):
         return self._parameters
 
     @property
+    def args(self) -> Sequence[Any]:
+        """Alias for parameters provided when the trigger was fired."""
+        return self._parameters
+
+    @property
     def is_reentry(self) -> bool:
         """True if the transition is a re-entry to the same state (source == destination)."""
         # Assumes states support equality check (e.g., Enums, hashable objects)

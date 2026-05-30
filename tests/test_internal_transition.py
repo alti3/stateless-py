@@ -22,7 +22,9 @@ async def test_internal_transition_executes_action() -> None:
     """Tests that an internal transition executes its action."""
     actions_executed: list[str] = []
 
-    def internal_action(transition: Transition[State, Trigger], args: Sequence[Any]) -> None:
+    def internal_action(
+        transition: Transition[State, Trigger], args: Sequence[Any]
+    ) -> None:
         actions_executed.append(f"internal_action_{args[0]}")
 
     sm = StateMachine[State, Trigger](State.A)
@@ -41,7 +43,9 @@ async def test_internal_transition_multiple_args() -> None:
     """Tests internal transition action receiving multiple arguments."""
     action_args = None
 
-    def internal_action(transition: Transition[State, Trigger], args: Sequence[Any]) -> None:
+    def internal_action(
+        transition: Transition[State, Trigger], args: Sequence[Any]
+    ) -> None:
         nonlocal action_args
         action_args = args
 

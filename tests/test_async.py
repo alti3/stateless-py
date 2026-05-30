@@ -87,7 +87,7 @@ async def test_can_fire_async() -> None:
     )  # Args shouldn't affect if guard takes none
 
     # Test trigger valid in different state
-    sm.fire(Trigger.Z)  # Move to B sync
+    await sm.fire_async(Trigger.Z)  # Move to B
     assert sm.state == State.B
     assert await sm.can_fire_async(Trigger.X) is False  # Guard is false in B
 
@@ -153,7 +153,9 @@ async def test_queued_firing_mode_processes_sequentially() -> None:
     # Fire multiple triggers quickly
     await sm.fire_async(Trigger.X)  # A -> B (takes 0.05s in entry)
     await sm.fire_async(Trigger.Y)  # B -> C (should wait for X to finish)
-    await sm.fire_async(Trigger.Z)  # Unhandled (should be logged/handled after Y)
+    with pytest.warns(RuntimeWarning, match="Queued trigger .* failed"):
+        await sm.fire_async(Trigger.Z)  # Unhandled after Y
+        await sm._queued_triggers.join()
 
     # Wait for queue to likely process
     await asyncio.sleep(0.2)
@@ -186,11 +188,11 @@ async def test_queued_firing_mode_guard_failure() -> None:
     sm.configure(State.B).permit_if(Trigger.Y, State.C, guard_y)
 
     await sm.fire_async(Trigger.X)  # A -> B
-    await sm.fire_async(Trigger.Y)  # B -> C (guard fails initially)
+    with pytest.warns(RuntimeWarning, match="Queued trigger .* failed"):
+        await sm.fire_async(Trigger.Y)  # B -> C (guard fails initially)
+        await sm._queued_triggers.join()
 
-    await asyncio.sleep(0.1)  # Let X process
     assert sm.state == State.B  # Should be in B, Y failed
-    # Check logs for InvalidTransitionError related to Y
 
     can_y = True  # Allow Y now
     await sm.fire_async(Trigger.Y)  # Fire Y again

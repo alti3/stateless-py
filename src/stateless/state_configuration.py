@@ -2,11 +2,14 @@
 Provides the fluent API for configuring states (Permit, Ignore, OnEntry, etc.).
 """
 
+from __future__ import annotations
+
 from typing import (
     Generic,
+    TYPE_CHECKING,
     overload,
 )
-from collections.abc import Sequence, Callable
+from collections.abc import Sequence, Callable, Awaitable
 from .transition import StateT, TriggerT
 from .state_representation import StateRepresentation
 from .guards import GuardDef, guards_from_definitions
@@ -29,8 +32,10 @@ from .trigger_behaviour import (
 from .exceptions import ConfigurationError
 
 # Forward declaration for StateMachine type hint
-if False:  # TYPE_CHECKING
+if TYPE_CHECKING:
     from .state_machine import StateMachine
+
+GuardFunc = Callable[..., bool | Awaitable[bool]]
 
 
 # --- Helper Function ---
@@ -100,7 +105,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         self,
         trigger: TriggerT,
         destination_state: StateT,
-        guard: Callable[..., bool] | Sequence[GuardDef] = (),
+        guard: GuardFunc | Sequence[GuardDef] = (),
         guard_description: str | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]": ...
 
@@ -117,7 +122,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         self,
         trigger: TriggerT,
         destination_state: StateT,
-        guard: Callable[..., bool] | Sequence[GuardDef] = (),
+        guard: GuardFunc | Sequence[GuardDef] = (),
         guard_description: str | None = None,
         *,
         guards: Sequence[GuardDef] | None = None,  # Keyword-only alternative
@@ -165,7 +170,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         self,
         trigger: TriggerT,
         destination_state: StateT,
-        guard: Callable[..., bool],
+        guard: GuardFunc,
         guard_description: str | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]":
         """
@@ -181,7 +186,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
     def permit_reentry(
         self,
         trigger: TriggerT,
-        guard: Callable[..., bool] | Sequence[GuardDef] = (),
+        guard: GuardFunc | Sequence[GuardDef] = (),
         guard_description: str | None = None,
         *,
         guards: Sequence[GuardDef] | None = None,
@@ -212,7 +217,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
     def permit_reentry_if(
         self,
         trigger: TriggerT,
-        guard: Callable[..., bool],
+        guard: GuardFunc,
         guard_description: str | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]":
         """Accept the specified trigger and perform reentry actions if the guard function returns True."""
@@ -225,7 +230,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
     def ignore(
         self,
         trigger: TriggerT,
-        guard: Callable[..., bool] | Sequence[GuardDef] = (),
+        guard: GuardFunc | Sequence[GuardDef] = (),
         guard_description: str | None = None,
         *,
         guards: Sequence[GuardDef] | None = None,
@@ -255,7 +260,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
     def ignore_if(
         self,
         trigger: TriggerT,
-        guard: Callable[..., bool],
+        guard: GuardFunc,
         guard_description: str | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]":
         """Ignore the specified trigger when in this state if the guard function returns True."""
@@ -372,7 +377,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         self,
         trigger: TriggerT,
         action: Callable[..., ActionFuncResult],
-        guard: Callable[..., bool] | Sequence[GuardDef] = (),
+        guard: GuardFunc | Sequence[GuardDef] = (),
         guard_description: str | None = None,
         action_description: str | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]": ...
@@ -391,7 +396,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         self,
         trigger: TriggerT,
         action: Callable[..., ActionFuncResult],
-        guard: Callable[..., bool] | Sequence[GuardDef] = (),
+        guard: GuardFunc | Sequence[GuardDef] = (),
         guard_description: str | None = None,
         action_description: str | None = None,
         *,
@@ -444,7 +449,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         self,
         trigger: TriggerT,
         destination_selector: DestinationStateSelector,
-        guard: Callable[..., bool] | Sequence[GuardDef] = (),
+        guard: GuardFunc | Sequence[GuardDef] = (),
         guard_description: str | None = None,
         selector_description: str | None = None,
     ) -> "StateConfiguration[StateT, TriggerT]": ...
@@ -463,7 +468,7 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         self,
         trigger: TriggerT,
         destination_selector: DestinationStateSelector,
-        guard: Callable[..., bool] | Sequence[GuardDef] = (),
+        guard: GuardFunc | Sequence[GuardDef] = (),
         guard_description: str | None = None,
         selector_description: str | None = None,
         *,
@@ -520,7 +525,14 @@ class StateConfiguration(Generic[StateT, TriggerT]):
         target_rep = self._lookup_func(
             target_state
         )  # Ensure target state exists in config
-        if not target_rep.is_included_in(self.state):
+        if (
+            target_rep.superstate is not None
+            and not target_rep.is_included_in(self.state)
+        ) or (
+            target_rep.superstate is None
+            and type(target_state) is type(self.state)
+            and target_state != self.state
+        ):
             raise ConfigurationError(
                 f"Initial transition target state {target_state!r} must be a substate of {self.state!r}."
             )

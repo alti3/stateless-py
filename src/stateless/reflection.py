@@ -1,5 +1,5 @@
-from typing import Type, Any
-from collections.abc import Callable
+from typing import Type, Any, TypeAlias
+from collections.abc import Callable, Awaitable
 from pydantic import BaseModel, Field
 import inspect
 
@@ -26,7 +26,7 @@ class InvocationInfo(BaseModel):
     ) -> "InvocationInfo":
         """Creates InvocationInfo from a callable."""
         method_name = getattr(func, "__name__", None)
-        if description is None and method_name and "<lambda>" not in method_name:
+        if description is None and method_name:
             desc = method_name
         elif description is not None:
             desc = description
@@ -231,5 +231,7 @@ class StateMachineInfo(BaseModel):
 
 
 # Helper type for callables used in configuration
-GuardDef = tuple[Callable[..., bool], str | None]
-ActionDef = Callable | tuple[Callable, str | None]
+GuardFunc: TypeAlias = Callable[..., bool | Awaitable[bool]]
+GuardDef: TypeAlias = tuple[GuardFunc, str | None]
+ActionFunc: TypeAlias = Callable[..., Any]
+ActionDef: TypeAlias = ActionFunc | tuple[ActionFunc, str | None]

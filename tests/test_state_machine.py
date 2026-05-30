@@ -102,8 +102,8 @@ def test_unhandled_trigger_sync_handler() -> None:
 
     assert sm.state == State.A  # State should not change
     assert len(unhandled_log) == 1
-    assert "state=State.A" in unhandled_log[0]
-    assert "trigger=Trigger.Z" in unhandled_log[0]
+    assert "state=<State.A: 1>" in unhandled_log[0]
+    assert "trigger=<Trigger.Z: 3>" in unhandled_log[0]
     assert "args=(1, 'two')" in unhandled_log[0]
 
 
@@ -123,8 +123,8 @@ async def test_unhandled_trigger_async_handler() -> None:
 
     assert sm.state == State.A
     assert len(unhandled_log) == 1
-    assert "state=State.A" in unhandled_log[0]
-    assert "trigger=Trigger.Z" in unhandled_log[0]
+    assert "state=<State.A: 1>" in unhandled_log[0]
+    assert "trigger=<Trigger.Z: 3>" in unhandled_log[0]
     assert "args=('arg',)" in unhandled_log[0]
 
 
@@ -270,9 +270,10 @@ def test_initial_state_vs_accessor_mismatch() -> None:
         external_state["current"] = s
 
     # Initialize with A, but accessor returns B
-    sm = StateMachine[State, Trigger](
-        State.A, state_accessor=getter, state_mutator=setter
-    )
+    with pytest.warns(RuntimeWarning, match="Initial state .* does not match"):
+        sm = StateMachine[State, Trigger](
+            State.A, state_accessor=getter, state_mutator=setter
+        )
 
     # What is the expected state? C# likely uses the accessor's value.
     assert sm.state == State.B  # Assert that accessor value takes precedence

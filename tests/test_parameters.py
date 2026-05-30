@@ -42,7 +42,8 @@ def test_action_signature_transition_only() -> None:
         actions_log.append(f"action_t_{transition.trigger}")
 
     sm = StateMachine[State, Trigger](State.A)
-    sm.configure(State.A).permit(Trigger.X, State.B).on_entry(action)
+    sm.configure(State.A).permit(Trigger.X, State.B)
+    sm.configure(State.B).on_entry(action)
     sm.fire(Trigger.X, 1, 2)  # Pass args even if not accepted
     assert actions_log == ["action_t_Trigger.X"]
 
@@ -52,7 +53,8 @@ def test_action_signature_transition_and_args_tuple() -> None:
         actions_log.append(f"action_t_args_{args}")
 
     sm = StateMachine[State, Trigger](State.A)
-    sm.configure(State.A).permit(Trigger.X, State.B).on_entry(action)
+    sm.configure(State.A).permit(Trigger.X, State.B)
+    sm.configure(State.B).on_entry(action)
     sm.fire(Trigger.X, 1, "two")
     assert actions_log == ["action_t_args_(1, 'two')"]
 
@@ -72,7 +74,8 @@ def test_action_signature_var_args() -> None:
         assert args[1] == (1, 2, 3)  # The trigger args tuple
 
     sm = StateMachine[State, Trigger](State.A)
-    sm.configure(State.A).permit(Trigger.X, State.B).on_entry(action)
+    sm.configure(State.A).permit(Trigger.X, State.B)
+    sm.configure(State.B).on_entry(action)
     sm.fire(Trigger.X, 1, 2, 3)
     # The log will contain the Transition object representation, which might be verbose.
     # Let's check the structure instead of exact string match.
@@ -107,7 +110,8 @@ def test_parameters_passed_to_sync_action() -> None:
         actions_log.append((a, b, transition.trigger))
 
     sm = StateMachine[State, Trigger](State.A)
-    sm.configure(State.A).permit(Trigger.X, State.B).on_entry(action)
+    sm.configure(State.A).permit(Trigger.X, State.B)
+    sm.configure(State.B).on_entry(action)
 
     sm.fire(Trigger.X, 10, "hello")
     assert actions_log == [(10, "hello", Trigger.X)]
@@ -115,12 +119,15 @@ def test_parameters_passed_to_sync_action() -> None:
 
 @pytest.mark.asyncio
 async def test_parameters_passed_to_async_action() -> None:
-    async def action(a: bool, transition: Transition[State, Trigger], args: Sequence[Any]) -> None:
+    async def action(
+        a: bool, transition: Transition[State, Trigger], args: Sequence[Any]
+    ) -> None:
         # Test different ways of accepting args
         actions_log.append((a, transition.trigger, args))
 
     sm = StateMachine[State, Trigger](State.A)
-    sm.configure(State.A).permit(Trigger.X, State.B).on_entry(action)
+    sm.configure(State.A).permit(Trigger.X, State.B)
+    sm.configure(State.B).on_entry(action)
 
     await sm.fire_async(Trigger.X, True, 3.14, None)
     # Action wrapper passes (transition, all_args_tuple)
@@ -129,11 +136,14 @@ async def test_parameters_passed_to_async_action() -> None:
     # Let's redefine action to accept *args or specific types
     actions_log.clear()
 
-    async def action_v2(a: bool, b: float, c: None, transition: Transition[State, Trigger]):
+    async def action_v2(
+        a: bool, b: float, c: None, transition: Transition[State, Trigger]
+    ):
         actions_log.append((a, b, c, transition.trigger))
 
     sm = StateMachine[State, Trigger](State.A)
-    sm.configure(State.A).permit(Trigger.X, State.B).on_entry(action_v2)
+    sm.configure(State.A).permit(Trigger.X, State.B)
+    sm.configure(State.B).on_entry(action_v2)
     await sm.fire_async(Trigger.X, True, 3.14, None)
     assert actions_log == [(True, 3.14, None, Trigger.X)]
 
@@ -150,10 +160,12 @@ def test_parameters_passed_to_sync_guard() -> None:
     assert guard_log == [10]
     assert sm.state == State.B
 
+    sm = StateMachine[State, Trigger](State.A)
+    sm.configure(State.A).permit_if(Trigger.X, State.B, guard)
     with pytest.raises(InvalidTransitionError):
         sm.fire(Trigger.X, -5)
     assert guard_log == [10, -5]
-    assert sm.state == State.B  # Still B from previous fire
+    assert sm.state == State.A
 
 
 @pytest.mark.asyncio
@@ -177,6 +189,7 @@ def test_parameters_passed_to_sync_selector() -> None:
 
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).dynamic(Trigger.X, selector)
+    sm.configure(State.B).dynamic(Trigger.X, selector)
 
     sm.fire(Trigger.X, "B")
     assert selector_log == ["B"]
@@ -195,6 +208,7 @@ async def test_parameters_passed_to_async_selector() -> None:
 
     sm = StateMachine[State, Trigger](State.A)
     sm.configure(State.A).dynamic(Trigger.X, selector)
+    sm.configure(State.B).dynamic(Trigger.X, selector)
 
     await sm.fire_async(Trigger.X, 1)
     assert selector_log == [1]

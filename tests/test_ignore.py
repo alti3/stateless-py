@@ -26,11 +26,11 @@ def setup_function() -> None:
 
 
 def entry(s: State) -> Callable[[Transition[State, Trigger]], None]:
-    return lambda t: actions_log.append(f"entry_{s.name}")
+    return lambda t: actions_log.append(f"entry_{type(s).__name__}.{s.name}")
 
 
 def exit_(s: State) -> Callable[[Transition[State, Trigger]], None]:
-    return lambda t: actions_log.append(f"exit_{s.name}")
+    return lambda t: actions_log.append(f"exit_{type(s).__name__}.{s.name}")
 
 
 # --- Basic Ignore ---
@@ -106,5 +106,5 @@ async def test_ignore_if_guard_not_met_unhandled() -> None:
 
     with pytest.raises(InvalidTransitionError) as excinfo:
         await sm.fire_async(Trigger.GUARDED_IGNORE)
-    assert "No valid transitions permitted" in str(excinfo.value)
+    assert "guard conditions were not met" in str(excinfo.value)
     assert sm.state == State.A
