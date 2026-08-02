@@ -19,16 +19,16 @@ uvx ty check
 
 ## Documentation
 
-Build docs locally with MkDocs:
+Preview or build the docs locally with Zensical:
 
 ```bash
-uv run mkdocs serve
+uv run zensical serve
 # or
-uv run mkdocs build
+uv run zensical build --clean --strict
 ```
 
-If MkDocs dependencies are not installed in your environment, add them first:
+If Zensical is not installed in your environment, sync the development dependencies first:
 
 ```bash
-uv add --dev mkdocs mkdocs-material mkdocstrings[python] pymdown-extensions
+uv sync --dev
 ```

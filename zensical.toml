@@ -1,0 +1,66 @@
+[project]
+site_name = "Stateless-py"
+site_description = "A Python library for building strongly-typed, fluent state machines"
+site_url = "https://alti3.github.io/stateless-py/"
+repo_url = "https://github.com/alti3/stateless-py"
+repo_name = "alti3/stateless-py"
+nav = [
+    { "Home" = "index.md" },
+    { "Getting Started" = [
+        { "Installation" = "getting-started/installation.md" },
+        { "Quickstart" = "getting-started/quickstart.md" },
+    ] },
+    { "Guide" = [
+        { "Core Concepts" = "guide/core-concepts.md" },
+        { "Configuration" = "guide/configuration.md" },
+        { "Guards" = "guide/guards.md" },
+        { "Actions" = "guide/actions.md" },
+        { "Async and Firing Modes" = "guide/async.md" },
+        { "Hierarchical States" = "guide/hierarchy.md" },
+        { "Advanced Transitions" = "guide/advanced-transitions.md" },
+        { "Triggering and Queries" = "guide/triggering-and-queries.md" },
+        { "External State Storage" = "guide/external-state.md" },
+    ] },
+    { "Introspection" = [
+        { "Overview" = "introspection/overview.md" },
+        { "Graphs" = "introspection/graphs.md" },
+    ] },
+    { "Examples" = [
+        { "Overview" = "examples/index.md" },
+        { "01 Simple Phone Call" = "examples/01-simple-phone-call.md" },
+        { "02 Bug Tracker" = "examples/02-bug-tracker.md" },
+        { "03 Async Actions" = "examples/03-async-actions.md" },
+        { "04 Ignore and Reentry" = "examples/04-ignore-reentry.md" },
+        { "05 On Off Toggle" = "examples/05-on-off.md" },
+        { "06 Alarm Asyncio Workflow" = "examples/06-alarm-asyncio.md" },
+        { "07 JSON Serialization" = "examples/07-json-serialization.md" },
+        { "08 Advanced Features" = "examples/08-advanced-features.md" },
+    ] },
+    { "API Reference" = [
+        { "Overview" = "reference/index.md" },
+        { "StateMachine" = "reference/state-machine.md" },
+        { "StateConfiguration" = "reference/state-configuration.md" },
+        { "Transition Model" = "reference/transition.md" },
+        { "Reflection Models" = "reference/reflection-models.md" },
+        { "Errors and Firing Modes" = "reference/errors-and-modes.md" },
+    ] },
+    { "Architecture" = "architecture.md" },
+    { "C# Parity" = "parity.md" },
+    { "Development" = "development.md" },
+]
+
+[project.theme]
+features = [
+    "content.code.copy",
+    "navigation.expand",
+    "navigation.sections",
+    "navigation.top",
+]
+
+[project.markdown_extensions.admonition]
+[project.markdown_extensions.attr_list]
+[project.markdown_extensions.tables]
+[project.markdown_extensions.toc]
+permalink = true
+[project.markdown_extensions.pymdownx.details]
+[project.markdown_extensions.pymdownx.superfences]
